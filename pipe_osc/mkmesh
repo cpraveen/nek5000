@@ -1,0 +1,8 @@
+#!/bin/bash
+
+n2to3 < n2to3.in
+
+genmap << EOF
+pipe
+0.01
+EOF
