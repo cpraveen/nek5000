@@ -3,7 +3,7 @@
             2 DIMENSIONAL RUN
           103 PARAMETERS FOLLOW
        1.000000         p01 DENSITY
-      -100.0000         p02 VISCOS
+      0.0000000         p02 VISCOS  (This is set in usr file)
       0.0000000E+00
       0.0000000E+00
       0.0000000E+00
@@ -103,7 +103,7 @@
       0.0000000E+00     p99    dealiasing:if <0 disable
       0.0000000E+00     p100 reserved
       0.0000000E+00     p101   No. of additional filter modes
-      0.0000000E+00
+      0.0000000E+00     p102 >0 = Dump out divergence
       -1.000000         p103   weight of stabilizing filter (.01)
       4  Lines of passive scalar data follows2 CONDUCT; 2RHOCP
    1.00000       1.00000       1.00000       1.00000       1.00000

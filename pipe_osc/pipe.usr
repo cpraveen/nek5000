@@ -73,19 +73,17 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'TOTAL'
       include 'NEKUSE'
+      common/pipe/alpha,Re_o,Re_m,omega,radius,uo_cent
       real womersley
 
-      eps   = 0.1
-      omega = 1.0
-
-      xp  = x/0.5
-      yp  = y/0.5
+      xp  = x/radius
+      yp  = y/radius
       rr  = xp*xp + yp*yp
+      r   = sqrt(rr)
 
       ux  = 0.0
       uy  = 0.0
-      uz  = 1.0 - rr + womersley(rr, time)
-      !uz  = uz * (1.0 + eps * sin(omega * time))
+      uz  = 1.0 - rr + womersley(r, time)
       temp= 0.0
 
       return
@@ -95,15 +93,17 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'TOTAL'
       include 'NEKUSE'
+      common/pipe/alpha,Re_o,Re_m,omega,radius,uo_cent
       real womersley
 
-      xp  = x/0.5
-      yp  = y/0.5
+      xp  = x/radius
+      yp  = y/radius
       rr  = xp*xp + yp*yp
+      r   = sqrt(rr)
 
       ux  = 0.0
       uy  = 0.0
-      uz  = 1 - rr + womersley(rr, 0.0)
+      uz  = 1.0 - rr + womersley(r, 0.0)
       temp= 0.0
 
       return
@@ -120,10 +120,10 @@ c
 c
       api = 4.0 * atan(1.0)
 
-      Re_m = 2160.0
-      Re_o = 610.0
-      alpha = 10.0
-      radius = 0.5
+      Re_m = 2160.0     ! mean reynolds
+      Re_o = 610.0      ! oscillatory reynolds
+      alpha = 10.0      ! womersley number
+      radius = 0.5      ! pipe radius
 
       anu = 1.0/Re_m
       omega = alpha**2 * anu / radius**2
@@ -138,10 +138,12 @@ c
       uo_cent = 1.0 / real(cf) * (Re_o / Re_m)
 
 
-      write(*,*)'Re_m  =', Re_m
-      write(*,*)'Re_o  =', Re_o
-      write(*,*)'alpha =', alpha
-      write(*,*)'omega =', omega
+      if(nid.eq.0)then
+         write(*,*)'    Re_m  =', Re_m
+         write(*,*)'    Re_o  =', Re_o
+         write(*,*)'    alpha =', alpha
+         write(*,*)'    omega =', omega
+      endif
 
       return
       end
@@ -149,10 +151,7 @@ c-----------------------------------------------------------------------
       subroutine usrdat3
       include 'SIZE'
       include 'TOTAL'
-      common/pipe/alpha,Re_o,Re_m,omega,radius,uo_cent
 c
-      param(2) = -Re_m
-
       return
       end
 c-----------------------------------------------------------------------
@@ -160,11 +159,16 @@ c-----------------------------------------------------------------------
 
       include 'SIZE'
       include 'TOTAL'
+      common/pipe/alpha,Re_o,Re_m,omega,radius,uo_cent
 
       x0 = -0.5
       x1 =  0.5
       call rescale_x (xm1,x0,x1)  ! Rescale x & y so pipe diameter is 1.
       call rescale_x (ym1,x0,x1)
+
+c     copy viscosity coefficient
+      param(2)   = 1.0/Re_m
+      cpfld(1,1) = param(2)
 
       return
       end
