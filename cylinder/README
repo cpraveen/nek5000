@@ -1,0 +1,6 @@
+Cylinder in channel example
+
+cylinder center = (0.25, 0.2)
+outer box = (-1.5, 0) to (2.2, 0.4)
+
+Run mkmesh to generate new.rea file
