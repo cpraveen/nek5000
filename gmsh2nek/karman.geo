@@ -1,3 +1,4 @@
+//Mesh.ElementOrder = 2;
 
 lc = 0.02;
 
@@ -197,8 +198,18 @@ Transfinite Surface {87} = {22,64,62,26};
 
 Recombine Surface {49,53,56,60,65,69,74,79,84,87};
 
-Physical Surface(100) = {32,34,36,48,60,65,69,79,84,87};
-//Physical Surface(200) = {30,38,40,42,44,46,49,53,56,74};
-Physical Surface(200) = {-30,-38,-40,-42,-44,-46,-49,-53,-56,-74};
+Physical Surface(10) = {32,34,36,48,60,65,69,79,84,87,-30,-38,-40,-42,-44,-46,-49,-53,-56,-74};
 
-Geometry.Normals = 100;
+// inlet
+Physical Line(100) = {27,25,73,76};
+
+// cylinder
+Physical Line(200) = {6,3,2,7,55,59,62,66};
+
+// top and bottom sides
+Physical Line(300) = {28,23,16,17,75,82,85,88};
+
+//outlet
+Physical Line(400) = {18,21,50,89};
+
+//Geometry.Normals = 100;
