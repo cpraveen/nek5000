@@ -1009,6 +1009,42 @@ def scan_fluent_mesh(ifile):
         print 'Line = ',line
         raise IOError('Something went wrong reading fluent mesh.')
     
+def scan_gmsh_mesh(ifile):  
+    """Scan gmsh mesh and generate numerous maps."""
+    dim  = 2
+
+    # skip four lines
+    line = ifile.readline()
+    line = ifile.readline()
+    line = ifile.readline()
+    line = ifile.readline()
+
+    # number of nodes
+    num_vertices = int(ifile.readline())
+    print 'Number of vertices =', num_vertices
+
+    # read node coordinates
+    global nodes 
+    nodes = zeros((dim, num_vertices))
+    for i in range(num_vertices):
+        ii,x,y,z = ifile.readline().split()
+        # print ii,x,y,z
+        if dim==2:
+            nodes[:, i] = [float(x), float(y)]
+        else:
+            nodes[:, i] = [float(x), float(y), float(z)]
+
+    # skip two lines
+    line = ifile.readline()
+    line = ifile.readline()
+
+    nelem = int(ifile.readline())
+    print 'Total elements =', nelem
+
+    for e in range(nelem):
+        ii,ii,ii,ii,ii,v1,v2,v3,v4 = ifile.readline().split()
+        print v1,v2,v3,v4
+
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     tot_num_cells = len(cell_map)
     ofile  = open(ofilename + '.rea', "w")
@@ -1216,7 +1252,9 @@ def convert(meshfile,
     ofilename = meshfile[:-4]
     ifile  = open(meshfile, "r")
 
-    scan_fluent_mesh(ifile)
+    # scan_fluent_mesh(ifile)
+    scan_gmsh_mesh(ifile)
+    return
 
     dim = nodes.shape[0]
     create_cell_face_map(dim, mesh_format)
