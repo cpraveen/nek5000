@@ -1024,8 +1024,9 @@ def scan_gmsh_mesh(ifile):
     print 'Number of vertices =', num_vertices
 
     # read node coordinates
-    global nodes 
+    global nodes  
     nodes = zeros((dim, num_vertices))
+    
     for i in range(num_vertices):
         ii,x,y,z = ifile.readline().split()
         # print ii,x,y,z
@@ -1033,7 +1034,7 @@ def scan_gmsh_mesh(ifile):
             nodes[:, i] = [float(x), float(y)]
         else:
             nodes[:, i] = [float(x), float(y), float(z)]
-
+    
     # skip two lines
     line = ifile.readline()
     line = ifile.readline()
@@ -1041,9 +1042,46 @@ def scan_gmsh_mesh(ifile):
     nelem = int(ifile.readline())
     print 'Total elements =', nelem
 
+    global elem_id, elem_id_type, elem_id_tags, elem_id_nodes
+
+    elem_id = zeros(nelem,'i')
+    elem_id_type = zeros((nelem,dim),'i')
+    elem_id_tags = zeros((nelem,dim+1),'i')
+    elem_id_nodes = zeros((nelem,5),'i') # upto 4 nodes per element
+
     for e in range(nelem):
-        ii,ii,ii,ii,ii,v1,v2,v3,v4 = ifile.readline().split()
-        print v1,v2,v3,v4
+        ii = ifile.readline().split()
+	
+	elem_id[e] = int(ii[0])
+	elem_id_type[e,0] = elem_id[e]
+	elem_id_type[e,1] = int(ii[1])
+	#print elemType
+
+	elem_id_tags[e,0] = elem_id[e]
+	elem_id_tags[e,1] = int(ii[3])
+	elem_id_tags[e,2] = int(ii[4])
+	
+	if elem_id_type[e,1] == 1:  #line elements
+	    	
+	    elem_id_nodes[e,0] = elem_id[e]
+	    elem_id_nodes[e,1] = int(ii[5])
+	    elem_id_nodes[e,2] = int(ii[6])
+	
+	elif int(elem_id_type[e,1]) == 3:   # quad elements
+	
+	    elem_id_nodes[e,0] = elem_id[e]
+	    elem_id_nodes[e,1] = int(ii[5])
+	    elem_id_nodes[e,2] = int(ii[6])
+	    elem_id_nodes[e,3] = int(ii[7])
+	    elem_id_nodes[e,4] = int(ii[8])
+	    
+        else : 
+	    print 'Other element types not implemeneted yet'
+	    exit()
+
+    print elem_id_tags
+    print elem_id_nodes
+
 
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     tot_num_cells = len(cell_map)
