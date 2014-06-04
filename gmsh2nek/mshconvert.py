@@ -1025,15 +1025,22 @@ def scan_gmsh_mesh(ifile):
 
     # read node coordinates
     global nodes  
-    nodes = zeros((dim, num_vertices))
+    nodes = zeros((num_vertices,4))
     
     for i in range(num_vertices):
         ii,x,y,z = ifile.readline().split()
         # print ii,x,y,z
         if dim==2:
-            nodes[:, i] = [float(x), float(y)]
+            nodes[i, 0] = int(ii)
+	    nodes[i, 1]	= float(x)
+	    nodes[i, 2] = float(y)
         else:
-            nodes[:, i] = [float(x), float(y), float(z)]
+            nodes[i, 0] = int(ii)
+	    nodes[i, 1]	= float(x)
+	    nodes[i, 2] = float(y)
+	    nodes[i, 2] = float(z)
+
+    #print nodes[1316,2]
     
     # skip two lines
     line = ifile.readline()
@@ -1042,12 +1049,71 @@ def scan_gmsh_mesh(ifile):
     nelem = int(ifile.readline())
     print 'Total elements =', nelem
 
+    """
     global elem_id, elem_id_type, elem_id_tags, elem_id_nodes
-
     elem_id = zeros(nelem,'i')
     elem_id_type = zeros((nelem,dim),'i')
     elem_id_tags = zeros((nelem,dim+1),'i')
     elem_id_nodes = zeros((nelem,5),'i') # upto 4 nodes per element
+    """
+    
+    global face, cell, face_count, cell_count
+
+    face_count = 0
+    cell_count = 0
+
+    face = ([])  #face list
+    cell = ([])  #cell list
+
+    #face = [[0 for x in xrange(4)] for x in xrange(1)]  #face list
+    #cell = [[0 for x in xrange(6)] for x in xrange(1)]	#cell list
+
+    for e in range(nelem):
+        ii = ifile.readline().split()
+
+	if int(ii[1]) == 1:  #boundary edge elements
+
+	    boundary_tag = int(ii[3])
+	    no_of_tags = int(ii[2])
+	    vertex1 = int(ii[ 3 + no_of_tags])
+	    vertex2 = int(ii[ 3 + no_of_tags + 1]) 	
+	    
+	    #C0 and C1 tag will be updated later, now initialised as -1, -1
+	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1])  
+	    face_count = face_count + 1
+
+	elif int(ii[1]) == 3:  #quad elements
+
+	    surface_tag = int(ii[3])
+	    no_of_tags = int(ii[2])
+	    cell_type = int(ii[1])
+
+	    vertex1 = int(ii[ 3 + no_of_tags])
+	    vertex2 = int(ii[ 3 + no_of_tags + 1])
+	    vertex3 = int(ii[ 3 + no_of_tags + 2])
+	    vertex4 = int(ii[ 3 + no_of_tags + 3])
+
+	    cell.append([cell_count, surface_tag, cell_type, vertex1, vertex2, vertex3, vertex4])
+	    cell_count = cell_count + 1
+
+	elif int(ii[1]) == 2:  #triangular elements
+
+	    surface_tag = int(ii[3])
+	    no_of_tags = int(ii[2])
+	    cell_type = int(ii[1])
+
+	    vertex1 = int(ii[ 3 + no_of_tags])
+	    vertex2 = int(ii[ 3 + no_of_tags + 1])
+	    vertex3 = int(ii[ 3 + no_of_tags + 2])
+
+	    cell.append([cell_count, surface_tag, cell_type, vertex1, vertex2, vertex3])
+	    cell_count = cell_count + 1
+
+	else :
+	    print 'Other element types not implemeneted yet'
+	    sys.exit()
+	            
+    """
 
     for e in range(nelem):
         ii = ifile.readline().split()
@@ -1062,13 +1128,15 @@ def scan_gmsh_mesh(ifile):
 	elem_id_tags[e,2] = int(ii[4])
 	
 	if elem_id_type[e,1] == 1:  #line elements
-	    	
+	    
+	    nelem_bc = nelem_bc + 1	
 	    elem_id_nodes[e,0] = elem_id[e]
 	    elem_id_nodes[e,1] = int(ii[5])
 	    elem_id_nodes[e,2] = int(ii[6])
 	
 	elif int(elem_id_type[e,1]) == 3:   # quad elements
 	
+	    nelem_int = nelem_int + 1
 	    elem_id_nodes[e,0] = elem_id[e]
 	    elem_id_nodes[e,1] = int(ii[5])
 	    elem_id_nodes[e,2] = int(ii[6])
@@ -1079,10 +1147,51 @@ def scan_gmsh_mesh(ifile):
 	    print 'Other element types not implemeneted yet'
 	    exit()
 
-    print elem_id_tags
-    print elem_id_nodes
+    print 'nelem_bc : ',nelem_bc
+    print 'nelem_int : ',nelem_int
+    #print elem_id_tags
+    #print elem_id_nodes
+    """
 
+def create_gmsh_face_list():
 
+    #print cell[0][4]
+    #print face[0][2], face[0][3]
+
+    for i in range(cell_count) :
+
+	if cell[i][2] == 2: # triangular elements
+	
+	    print ' triangles not implemented yet'
+	    sys.exit()
+
+	elif cell[i][2] == 3: # quad elements
+
+	    vertex1 = cell[i][3]
+	    vertex2 = cell[i][4]
+	    add_face(vertex1, vertex2,i)
+
+	    vertex1 = cell[i][4]
+	    vertex2 = cell[i][5]
+	    add_face(vertex1, vertex2,i)
+	
+	    vertex1 = cell[i][5]
+	    vertex2 = cell[i][6]
+	    add_face(vertex1, vertex2,i)
+
+	    vertex1 = cell[i][6]
+	    vertex2 = cell[i][3]
+	    add_face(vertex1, vertex2,i)
+	else :
+	    print ' node type not implemented yet'
+	    sys.exit()
+
+	
+def add_face(v1,v2,ii):
+
+    print 'Function for adding new face'	
+	    
+	    
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     tot_num_cells = len(cell_map)
     ofile  = open(ofilename + '.rea', "w")
@@ -1292,6 +1401,7 @@ def convert(meshfile,
 
     # scan_fluent_mesh(ifile)
     scan_gmsh_mesh(ifile)
+    create_gmsh_face_list()
     return
 
     dim = nodes.shape[0]
