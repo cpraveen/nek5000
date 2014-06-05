@@ -317,35 +317,46 @@ def create_periodic_face_map(periodic_dx):
                     
             face1_list.remove((face_of_shadow, shadow_number))
     
-def read_faces(zone_id, Nmin, Nmax, bc_type, face, ifile):
+def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
     """Read all faces and create cell_face_map + some boundary maps."""
     
+    """
     line = ifile.readline()
     readline = False
     if re.search(re_parant, line): # check for initial paranthesis
         readline = True
-
+    """
     ls = []
     for i in range(Nmin, Nmax + 1):
-        if readline:
+        
+	""" 
+	if readline:
             line = ifile.readline()
         readline = True
         ln = line.split()
-        if face == 0:
-            nd = int(ln[0]) # Number of nodes
-            nds = [int(x, 16) for x in ln[1:(nd + 1)]]
-            cells = [int(x, 16) for x in ln[(nd + 1):]]
+	"""
+	
+        if face_type == 0:
+	    print 'face_type = 0 not allowed'
+	    sys.exit()
+            #nd = int(ln[0]) # Number of nodes
+            #nds = [int(x, 16) for x in ln[1:(nd + 1)]]
+            #cells = [int(x, 16) for x in ln[(nd + 1):]]
         else:
-            nd = face
-            nds = [int(x, 16) for x in ln[:nd]]
-            cells = [int(x, 16) for x in ln[nd:]]
+            nd = face_type
+            nds = [face[i][2], face[i][3]]
+            cells = [face[i][4], face[i][5]]
+	    #nds = [int(x, 16) for x in ln[:nd]]
+            #cells = [int(x, 16) for x in ln[nd:]]
             
         face_list.append([nd, copy(nds), copy(cells), bc_type, zone_id])
+
         if len(nds) == 2:
             face_cell_map[(nds[0], nds[1])] = copy(cells)
             face_cell_map[(nds[1], nds[0])] = copy(cells)
 
         face_number = len(face_list)
+
         if min(cells) == 0: # A boundary zone
             if zone_id in boundary_nodes:
                 boundary_nodes[zone_id] += nds
@@ -358,7 +369,7 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face, ifile):
             else:
                 boundary_nodes[zone_id] = nds
                 boundary_faces[zone_id] = [face_number - 1]
-                boundary_nodes_face_map[zone_id] = { nd: [face_number - 1]}
+                boundary_nodes_face_map[zone_id] = { nd-1: [face_number - 1]}
 
         for c in cells:
             if c > 0:                                                                      
@@ -370,6 +381,10 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face, ifile):
                     
     if min(cells) == 0:
         boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
+
+    boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
+    print 'face_list', face_list
+    print 'boundary_nodes_face_map', boundary_nodes_face_map
 
 def create_cell_map(dim):
     """Create cell_map for use with fenics mesh."""
@@ -1104,6 +1119,14 @@ def scan_gmsh_mesh(ifile):
 	else :
 	    print 'Other element types not implemeneted yet'
 	    sys.exit()
+
+    create_gmsh_face_list()
+    num_faces = len(face)
+
+    zone_id = 1
+
+    read_faces(zone_id,0,num_faces-1,2,2,'dummy')
+    zone_number_of_faces[zone_id] = num_faces
 	            
 def create_gmsh_face_list():
 
@@ -1162,19 +1185,19 @@ def add_face(v1,v2,ii):
 	    #print 'v1, v2', v1, v2
 	    if face[i][1]!=-1:  #boundary faces
 
-		face[i][4] = ii #C0 index
+		face[i][4] = ii+1 #C0 index
 		face[i][5] = 0  #C1 index
 	    else:
 		if face[i][4] == -1:
-		    face[i][4] = ii #C0 index
+		    face[i][4] = ii+1 #C0 index
 		else:
-		    face[i][5] = ii #C1 index
+		    face[i][5] = ii+1 #C1 index
 	    return
 	else :
 	    continue  #continue the face loop
 		
     #print 'New face found',ii, v1, v2
-    face.append([face_count, -1, v1, v2, ii, -1])
+    face.append([face_count, -1, v1, v2, ii+1, -1])
     face_count = face_count + 1
 	    
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
