@@ -1025,23 +1025,16 @@ def scan_gmsh_mesh(ifile):
 
     # read node coordinates
     global nodes  
-    nodes = zeros((num_vertices,4))
+    nodes = zeros((dim, num_vertices))
     
     for i in range(num_vertices):
         ii,x,y,z = ifile.readline().split()
         # print ii,x,y,z
         if dim==2:
-            nodes[i, 0] = int(ii)
-	    nodes[i, 1]	= float(x)
-	    nodes[i, 2] = float(y)
+            nodes[:, i] = [float(x), float(y)]
         else:
-            nodes[i, 0] = int(ii)
-	    nodes[i, 1]	= float(x)
-	    nodes[i, 2] = float(y)
-	    nodes[i, 2] = float(z)
+            nodes[:, i] = [float(x), float(y), float(z)]
 
-    #print nodes[1316,2]
-    
     # skip two lines
     line = ifile.readline()
     line = ifile.readline()
@@ -1078,7 +1071,6 @@ def scan_gmsh_mesh(ifile):
 	    vertex1 = int(ii[ 3 + no_of_tags])
 	    vertex2 = int(ii[ 3 + no_of_tags + 1]) 	
 	    
-	    #C0 and C1 tag will be updated later, now initialised as -1, -1
 	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1])  
 	    face_count = face_count + 1
 
@@ -1113,46 +1105,6 @@ def scan_gmsh_mesh(ifile):
 	    print 'Other element types not implemeneted yet'
 	    sys.exit()
 	            
-    """
-
-    for e in range(nelem):
-        ii = ifile.readline().split()
-	
-	elem_id[e] = int(ii[0])
-	elem_id_type[e,0] = elem_id[e]
-	elem_id_type[e,1] = int(ii[1])
-	#print elemType
-
-	elem_id_tags[e,0] = elem_id[e]
-	elem_id_tags[e,1] = int(ii[3])
-	elem_id_tags[e,2] = int(ii[4])
-	
-	if elem_id_type[e,1] == 1:  #line elements
-	    
-	    nelem_bc = nelem_bc + 1	
-	    elem_id_nodes[e,0] = elem_id[e]
-	    elem_id_nodes[e,1] = int(ii[5])
-	    elem_id_nodes[e,2] = int(ii[6])
-	
-	elif int(elem_id_type[e,1]) == 3:   # quad elements
-	
-	    nelem_int = nelem_int + 1
-	    elem_id_nodes[e,0] = elem_id[e]
-	    elem_id_nodes[e,1] = int(ii[5])
-	    elem_id_nodes[e,2] = int(ii[6])
-	    elem_id_nodes[e,3] = int(ii[7])
-	    elem_id_nodes[e,4] = int(ii[8])
-	    
-        else : 
-	    print 'Other element types not implemeneted yet'
-	    exit()
-
-    print 'nelem_bc : ',nelem_bc
-    print 'nelem_int : ',nelem_int
-    #print elem_id_tags
-    #print elem_id_nodes
-    """
-
 def create_gmsh_face_list():
 
     #print cell[0][4]
@@ -1186,11 +1138,44 @@ def create_gmsh_face_list():
 	    print ' node type not implemented yet'
 	    sys.exit()
 
-	
+    for i in range(face_count):
+	if face[i][4]==-1 or face[i][5]==-1:
+	    print 'face to cell index cannot be negative integer : exiting'
+	    print 'i', i
+	    print 'face[i][2]',face[i][2]
+	    print 'face[i][3]',face[i][3]
+	    print 'face[i][4]',face[i][4]
+	    print 'face[i][5]',face[i][5]
+	    sys.exit()
+
+    #print 'face list', face
+
 def add_face(v1,v2,ii):
 
-    print 'Function for adding new face'	
-	    
+    global face_count
+
+    for i in range(face_count):
+	
+	if (face[i][2] == v1 and face[i][3] == v2) or \
+	    (face[i][2] == v2 and face[i][3] == v1):
+		
+	    #print 'v1, v2', v1, v2
+	    if face[i][1]!=-1:  #boundary faces
+
+		face[i][4] = ii #C0 index
+		face[i][5] = 0  #C1 index
+	    else:
+		if face[i][4] == -1:
+		    face[i][4] = ii #C0 index
+		else:
+		    face[i][5] = ii #C1 index
+	    return
+	else :
+	    continue  #continue the face loop
+		
+    #print 'New face found',ii, v1, v2
+    face.append([face_count, -1, v1, v2, ii, -1])
+    face_count = face_count + 1
 	    
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     tot_num_cells = len(cell_map)
