@@ -1,7 +1,6 @@
-Steps for running the gmsh to .nek converter are:
+To try the program on test.geo do following
 
-1. Unix> ipython
+gmsh -2 test.geo
+python test.py
 
-2. run mshconvert.py
-
-3. convert('test.msh')
+This creats test.rea file.

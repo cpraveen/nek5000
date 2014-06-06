@@ -32,9 +32,9 @@ Transfinite Line{1,3} = n1 Using Progression p;
 Transfinite Line{2,4} = n2 Using Progression p;
 Recombine Surface {2};
 
-Physical Line(100001) = {1}; // bottom
-Physical Line(100002) = {2}; // outer radius
-Physical Line(100003) = {3}; // top
-Physical Line(100004) = {4}; // inner radius
+Physical Line(1) = {1}; // bottom
+Physical Line(2) = {2}; // outer radius
+Physical Line(3) = {3}; // top
+Physical Line(4) = {4}; // inner radius
 
 Physical Surface(100005) = {2};
