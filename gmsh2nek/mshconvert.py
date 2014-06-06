@@ -644,8 +644,7 @@ def create_boundary_section(bcs, temperature, passive_scalars, mesh_format):
                 print 'Periodic not finished yet !!!'
                 sys.exit()
                 # Face is periodic.
-                boundary_map[(c, local_face)] = \
-                                    periodic_cell_face_map[(c, local_face)]                                   
+                boundary_map[(c, local_face)] = periodic_cell_face_map[(c, local_face)]
                 boundary_val_map[(c, local_face)] = 'P'
                 if temperature:
                     temperature_val_map[(c, local_face)] = 'P'
@@ -1087,7 +1086,7 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
             ofile.write(reduce(add, ['{0:.8e}'.format(x).rjust(16) 
                                     for x in n1]) + '\n')
             ofile.write(reduce(add, ['{0:.8e}'.format(x).rjust(16) 
-                                    for x in n2]) + '\n')                                                       
+                                    for x in n2]) + '\n')
         else:
             nn = nodes[:, array(cell_map[i + 1]) - 1]
             for i in range(3):
@@ -1117,7 +1116,8 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
                 xx = curves_map[zone][1]['x'][i]
                 ofile.write(c1.format(curves_map[zone][0][i][1], 
                                     curves_map[zone][0][i][0]))
-                ofile.write(c2.format(xx[0], xx[1], xx[2], xx[3], xx[4],
+                # Notice change in sign of radius
+                ofile.write(c2.format(-xx[0], xx[1], xx[2], xx[3], xx[4],
                                     curves_map[zone][1]['type']))
         elif curves_map[zone][1]['type'] == 'm':
             for i in range(zone_number_of_faces[zone]):     
