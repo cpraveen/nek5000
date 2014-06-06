@@ -348,8 +348,14 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
             cells = [face[i][4], face[i][5]]
 	    #nds = [int(x, 16) for x in ln[:nd]]
             #cells = [int(x, 16) for x in ln[nd:]]
-            
-        face_list.append([nd, copy(nds), copy(cells), bc_type, zone_id])
+          
+	bc_tag = face[i][1]  # boundary tag 
+
+	if face[i][5] == 0 :# C1 index for boundary
+	    face_list.append([nd, copy(nds), copy(cells), bc_tag, zone_id]) # boundary face
+	else:
+	    surface_tag = get_surface_tag(nds)
+	    face_list.append([nd, copy(nds), copy(cells), surface_tag, zone_id]) # interior face
 
         if len(nds) == 2:
             face_cell_map[(nds[0], nds[1])] = copy(cells)
@@ -385,6 +391,25 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
     boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
     print 'face_list', face_list
     print 'boundary_nodes_face_map', boundary_nodes_face_map
+
+def get_surface_tag(face_vertex): #function for getting surface tag for interior faces
+    
+    for i in range(cell_count):
+
+	if face_vertex[0] == cell[i][3] and face_vertex[1] == cell[i][4]:
+	    return cell[i][1] 
+	
+	if face_vertex[0] == cell[i][4] and face_vertex[1] == cell[i][5]:
+	    return cell[i][1]
+    
+	if face_vertex[0] == cell[i][5] and face_vertex[1] == cell[i][6]:
+	    return cell[i][1]
+
+	if face_vertex[0] == cell[i][6] and face_vertex[1] == cell[i][3]:
+	    return cell[i][1]
+
+    print 'surface_tag not found, please check'
+    sys.exit()
 
 def create_cell_map(dim):
     """Create cell_map for use with fenics mesh."""
