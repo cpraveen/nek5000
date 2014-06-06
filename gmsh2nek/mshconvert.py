@@ -50,7 +50,6 @@ periodic_cell_face_map = {} # Map (cell, local face number) of periodic face to 
 periodic_node_map = {}      # Periodic node to node map
 
 # Some global values
-num_cells = {}              # Total number of cells in different zones
 zones = {}                  # zone information
 zone_number_of_faces = {}   # number of faces for each zone
 
@@ -231,21 +230,6 @@ C
        0 Point   Objects
 """
 
-def read_zone_nodes(dim, Nmin, Nmax, ifile):
-    """Scan lines for nodes and return in an array."""
-    line = ifile.readline()
-    readline = False
-    if re.search(re_parant, line): # check for initial paranthesis
-        readline = True
-        #dummy = lines.pop(0)
-    global nodes 
-    nodes = zeros((dim, Nmax - Nmin + 1))
-    for i in range(Nmin, Nmax + 1):
-        if readline:
-            line = ifile.readline()
-        readline = True
-        nodes[:, i - Nmin] = [eval(x) for x in line.split()]
-    
 def read_periodic(ifile, periodic_dx):
     """Scan periodic section and create periodic_face_map.
     However, if a dictionary periodic_dx has been supplied then simply skip
@@ -317,44 +301,27 @@ def create_periodic_face_map(periodic_dx):
                     
             face1_list.remove((face_of_shadow, shadow_number))
     
-def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
+def read_faces(Nmin, Nmax):
     """Read all faces and create cell_face_map + some boundary maps."""
     
-    """
-    line = ifile.readline()
-    readline = False
-    if re.search(re_parant, line): # check for initial paranthesis
-        readline = True
-    """
     ls = []
     for i in range(Nmin, Nmax + 1):
         
-	""" 
-	if readline:
-            line = ifile.readline()
-        readline = True
-        ln = line.split()
-	"""
-	
-        if face_type == 0:
-	    print 'face_type = 0 not allowed'
-	    sys.exit()
-            #nd = int(ln[0]) # Number of nodes
-            #nds = [int(x, 16) for x in ln[1:(nd + 1)]]
-            #cells = [int(x, 16) for x in ln[(nd + 1):]]
-        else:
-            nd = face_type
-            nds = [face[i][2], face[i][3]]
-            cells = [face[i][4], face[i][5]]
-	    #nds = [int(x, 16) for x in ln[:nd]]
-            #cells = [int(x, 16) for x in ln[nd:]]
+        nd  = 0
+        nds = [face[i][2], face[i][3]]
+        cells = [face[i][4], face[i][5]]
           
 	bc_tag = face[i][1]  # boundary tag 
+        zone_id = bc_tag
 
 	if face[i][5] == 0 :# C1 index for boundary
 	    face_list.append([nd, copy(nds), copy(cells), bc_tag, zone_id]) # boundary face
+            if zone_id in zone_number_of_faces:
+                zone_number_of_faces[zone_id] += 1
+            else:
+                zone_number_of_faces[zone_id] = 1
 	else:
-	    face_list.append([nd, copy(nds), copy(cells), -1, zone_id]) # interior face
+	    face_list.append([nd, copy(nds), copy(cells), -1, -1]) # interior face
 
         if len(nds) == 2:
             face_cell_map[(nds[0], nds[1])] = copy(cells)
@@ -384,10 +351,12 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
                     # Preliminary cell_face_map. Needs shaping up later
                     cell_face_map[c].append(face_number)
                     
-    if min(cells) == 0:
+    for zone_id in boundary_nodes:
         boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
 
-    boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
+    for zone_id in zone_number_of_faces:
+        print 'In ',zone_id, ', faces =', zone_number_of_faces[zone_id]
+
     #print 'face_list', face_list
     #print 'boundary_nodes_face_map', boundary_nodes_face_map
 
@@ -1025,13 +994,7 @@ def scan_gmsh_mesh(ifile):
 
     create_gmsh_face_list()
     num_faces = len(face)
-
-    zone_id = 1
-
-    read_faces(zone_id,0,num_faces-1,2,2,'dummy')
-    zone_number_of_faces[zone_id] = num_faces
-    
-    zones[zone_id] = ['interior', 'int_SOLID', ''] # need to check it
+    read_faces(0,num_faces-1)
 	            
 def create_gmsh_face_list():
 
