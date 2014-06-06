@@ -672,6 +672,8 @@ def create_boundary_section(bcs, temperature, passive_scalars, mesh_format):
             else:
                 local_face  = face_map[c][face_number + 1]
             if bc_type == 8 or bc_type == 12:
+                print 'Periodic not finished yet !!!'
+                sys.exit()
                 # Face is periodic.
                 boundary_map[(c, local_face)] = \
                                     periodic_cell_face_map[(c, local_face)]                                   
@@ -922,112 +924,6 @@ def find_mid_point(curve_zone, curve):
             xn, yn = fun(x0, x1, y0, y1, x, y)                
             mid_point_map[face] = (xn, yn, 0, 0, 0)
 
-#def scan_fluent_mesh(lines):
-def scan_fluent_mesh(ifile):  
-    """Scan fluent mesh and generate numerous maps."""
-    # Warning! Not yet tested for multiple interior zones
-    dim = 0
-    one = 0
-    num_faces = 0
-    while 1:
-        line = ifile.readline()
-        if len(line) == 0:
-            print 'Finished reading file\n'
-            break
-
-        #try:
-            #line = lines.pop(0)
-        #except:
-            #print 'Finished reading file\n'
-            #break
-        if dim == 0: # Dimension usually comes first
-            a = re.search(re_dimline, line)
-            if a: 
-                print 'Reading dimensions\n'
-                dim = int(a.group(1))
-                print 'Mesh is ' + str(dim) + 'D\n'
-                continue
-        
-        if one == 0: # The total number of nodes
-            a = re.search(re_zone0, line)
-            if a:
-                print 'Reading zone info\n'
-                one, num_vertices, dummy1, dummy2 = int(a.group(1)), \
-                     int(a.group(2), 16), int(a.group(3), 16), int(a.group(4))
-                continue
-            
-        a = re.search(re_zone, line) # Nodes
-        if a:
-            zone_id, first_id, last_id, dummy1, dummy2 = int(a.group(1), 16), \
-                int(a.group(2), 16), int(a.group(3), 16), int(a.group(4)), \
-                int(a.group(5))
-            print 'Reading nodes in zone ', zone_id + 1, '\n'
-            #read_zone_nodes(dim, first_id, last_id, lines)
-            #lines = lines[(last_id - first_id + 1):]  
-            read_zone_nodes(dim, first_id, last_id, ifile)
-            continue
-            
-        a = re.search(re_zones,line) # Zone info
-        if a:
-            print 'Reading zone ', line
-            dummy, zone_id, zone_type, zone_name, radius =  \
-                       int(a.group(1)), int(a.group(2)),  a.group(3), \
-                       a.group(4), a.group(5)
-            zones[zone_id] = [zone_type, zone_name, radius]
-            continue
-        
-        a = re.search(re_cells0, line) # Get total number of cells/elements
-        if a:
-            print 'Reading cell info ', line
-            first_id, tot_num_cells = int(a.group(3),16), int(a.group(5), 16)
-            continue
-
-        a = re.search(re_cells,line) # Get the cell info.
-        if a:
-            zone_id, first_id, last_id, bc_type, element_type = \
-                int(a.group(1)), int(a.group(2), 16), int(a.group(3), 16), \
-                int(a.group(4), 16), int(a.group(5), 16)
-            print 'Reading cells in zone ', zone_id, '\n'
-            if last_id == 0:
-                raise TypeError("Zero elements!")
-            num_cells[zone_id] = [first_id, last_id, bc_type, element_type]
-            continue
-
-        a = re.search(re_cells2,line) # Get the cell info.
-        if a:
-            raise TypeError("Wrong cell type. Can only handle one single cell type")
-
-        a = re.search(re_face0, line)
-        if a:
-            print 'Reading total number of faces\n', line
-            num_faces = int(a.group(3),16)
-            continue
-            
-        a = re.search(re_face, line)
-        if a:
-            print 'Reading faces ', line
-            zone_id, first_id, last_id, bc_type, face_type = \
-                 int(a.group(2), 16), int(a.group(3),16), int(a.group(4),16), \
-                 int(a.group(5), 16), int(a.group(6), 16)
-            read_faces(zone_id, first_id, last_id, bc_type, face_type, ifile)
-            #lines = lines[(last_id - first_id + 1):]
-            zone_number_of_faces[zone_id] = last_id - first_id + 1
-            continue
-        
-        a = re.search(re_periodic, line)
-        if a:
-            print 'Reading periodic connectivity\n', line
-            read_periodic(ifile, periodic_dx)
-            continue
-        
-        print 'Line = ',line
-        if any([re.search(st, line) for st in (re_parant, re_comment)]) or \
-                                                             not line.strip():
-            continue
-                
-        # Should not make it here
-        print 'Line = ',line
-        raise IOError('Something went wrong reading fluent mesh.')
     
 def scan_gmsh_mesh(ifile):  
     """Scan gmsh mesh and generate numerous maps."""
@@ -1109,6 +1005,8 @@ def scan_gmsh_mesh(ifile):
 	    cell_count = cell_count + 1
 
 	elif int(ii[1]) == 2:  #triangular elements
+	    print 'Triangular element not implemeneted yet'
+	    sys.exit()
 
 	    surface_tag = int(ii[3])
 	    no_of_tags = int(ii[2])
