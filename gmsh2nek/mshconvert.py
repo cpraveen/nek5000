@@ -354,8 +354,7 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
 	if face[i][5] == 0 :# C1 index for boundary
 	    face_list.append([nd, copy(nds), copy(cells), bc_tag, zone_id]) # boundary face
 	else:
-	    surface_tag = get_surface_tag(nds)
-	    face_list.append([nd, copy(nds), copy(cells), surface_tag, zone_id]) # interior face
+	    face_list.append([nd, copy(nds), copy(cells), -1, zone_id]) # interior face
 
         if len(nds) == 2:
             face_cell_map[(nds[0], nds[1])] = copy(cells)
@@ -389,27 +388,8 @@ def read_faces(zone_id, Nmin, Nmax, bc_type, face_type, ifile):
         boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
 
     boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
-    print 'face_list', face_list
-    print 'boundary_nodes_face_map', boundary_nodes_face_map
-
-def get_surface_tag(face_vertex): #function for getting surface tag for interior faces
-    
-    for i in range(cell_count):
-
-	if face_vertex[0] == cell[i][3] and face_vertex[1] == cell[i][4]:
-	    return cell[i][1] 
-	
-	if face_vertex[0] == cell[i][4] and face_vertex[1] == cell[i][5]:
-	    return cell[i][1]
-    
-	if face_vertex[0] == cell[i][5] and face_vertex[1] == cell[i][6]:
-	    return cell[i][1]
-
-	if face_vertex[0] == cell[i][6] and face_vertex[1] == cell[i][3]:
-	    return cell[i][1]
-
-    print 'surface_tag not found, please check'
-    sys.exit()
+    #print 'face_list', face_list
+    #print 'boundary_nodes_face_map', boundary_nodes_face_map
 
 def create_cell_map(dim):
     """Create cell_map for use with fenics mesh."""
@@ -725,7 +705,7 @@ def create_boundary_section(bcs, temperature, passive_scalars, mesh_format):
                 local_face0 = face_map[c0][face_number + 1]
                 local_face1 = face_map[c1][face_number + 1] 
                 
-            if bc_type == 2:
+            if bc_type == -1:
                 # interior
                 boundary_map[(c0, local_face0)] = (c1, local_face1)
                 boundary_map[(c1, local_face1)] = (c0, local_face0)
@@ -1152,6 +1132,8 @@ def scan_gmsh_mesh(ifile):
 
     read_faces(zone_id,0,num_faces-1,2,2,'dummy')
     zone_number_of_faces[zone_id] = num_faces
+    
+    zones[zone_id] = ['interior', 'int_SOLID', ''] # need to check it
 	            
 def create_gmsh_face_list():
 
@@ -1434,13 +1416,10 @@ def convert(meshfile,
 
     # scan_fluent_mesh(ifile)
     scan_gmsh_mesh(ifile)
-    create_gmsh_face_list()
-    return
-
     dim = nodes.shape[0]
     create_cell_face_map(dim, mesh_format)
-    create_periodic_face_map(periodic_dx)
-    create_periodic_cell_face_map()
+    #create_periodic_face_map(periodic_dx)
+    #create_periodic_cell_face_map()
     create_boundary_section(bcs, temperature, passive_scalars, mesh_format)
 
     # Modify the entire mesh using the shape-function func
