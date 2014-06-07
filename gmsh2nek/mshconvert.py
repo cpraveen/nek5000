@@ -333,7 +333,7 @@ def read_faces(Nmin, Nmax):
                 boundary_nodes_face_map[zone_id] = { nd-1: [face_number - 1]}
 
         for c in cells:
-            if c > 0:                                                                      
+            if c > 0:
                 if not c in cell_face_map:
                     cell_face_map[c] = [face_number]
                 else:
@@ -341,10 +341,11 @@ def read_faces(Nmin, Nmax):
                     cell_face_map[c].append(face_number)
                     
     for zone_id in boundary_nodes:
+        print 'Remove duplicate boundary nodes for zone =', zone_id
         boundary_nodes[zone_id] = list(Set(boundary_nodes[zone_id]))
 
     for zone_id in zone_number_of_faces:
-        print 'In ',zone_id, ', faces =', zone_number_of_faces[zone_id]
+        print 'In zone =',zone_id, ', faces =', zone_number_of_faces[zone_id]
 
     #print 'face_list', face_list
     #print 'boundary_nodes_face_map', boundary_nodes_face_map
@@ -642,9 +643,14 @@ def create_boundary_section(bcs, temperature, passive_scalars, mesh_format):
                         
             else:
                 boundary_map[(c, local_face)] = (0, 0)
-                if bcs:
+                if zone_id in bcs:
                     boundary_val_map[(c, local_face)] = bcs[zone_id]
                 else:
+                    print 'Error: no bc given for zone =', zone_id
+                    sys.exit()
+                if not bcs:
+                    print 'Error: bcs must be given'
+                    sys.exit()
                     boundary_val_map[(c, local_face)] = zones[zone_id][1][-1]
                     bcs_copy[zone_id] = zones[zone_id][1][-1]
                 if temperature:

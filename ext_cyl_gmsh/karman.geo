@@ -5,7 +5,8 @@
 //Mesh.SecondOrderIncomplete = 1;
 
 lc = 0.02;
-lo = 0.1;
+lo = 1.0;  // outer boundary
+lw = 0.2;  // wake outlet
 
 d = 0.1;
 r = 0.5*d;
@@ -13,13 +14,13 @@ R = 3*r;
 
 assym = 0.0*d;
 
-h = 5*d;
-l1 = 5*d;
-l2 = 10*d;
+h = 50*d;
+l1 = 50*d;
+l2 = 100*d;
 
 n = 2;
-nl1 = 4; // along x before cylinder
-nl2 = 50;
+nl1 = 4;  // along x before cylinder
+nl2 = 100; // along wake
 nr  = 5;  // along radius
 nw  = 10; // normal to side wall
 
@@ -33,7 +34,7 @@ Point(2) = {0,r,0,lc};
 Point(3) = {r,0,0,lc};
 Point(4) = {-r,0,0,lc};
 Point(5) = {-l1,0,0,lo};
-Point(6) = {l2,0,0,lo};
+Point(6) = {l2,0,0,lw};
 Point(7) = {-l1,h,0,lo};
 Point(8) = {l2,h,0,lo};
 Point(9) = {R,0.0,0,lc};
@@ -44,7 +45,7 @@ Point(13) = {r*Sin(Pi/4),r*Sin(Pi/4),0,lc};
 Point(14) = {-r*Sin(Pi/4),r*Sin(Pi/4),0,lc};
 Point(15) = {R*Sin(Pi/4),R*Sin(Pi/4),0,lc};
 Point(16) = {-R*Sin(Pi/4),R*Sin(Pi/4),0,lc};
-Point(17) = {l2,R*Sin(Pi/4),0,lo};
+Point(17) = {l2,R*Sin(Pi/4),0,lw};
 Point(18) = {-l1,R*Sin(Pi/4),0,lo};
 Point(19) = {R*Sin(Pi/4),h,0,lo};
 Point(20) = {-R*Sin(Pi/4),h,0,lo};
@@ -132,9 +133,9 @@ Translate {0.0,assym,0.0} {
 }
 
 
-Transfinite Line {15} = nl2+1 Using Progression 0.99;
-Transfinite Line {24} = nl2+1 Using Progression 0.99;
-Transfinite Line {-43} = nl2+1 Using Progression 0.99;
+Transfinite Line {15} = nl2+1 Using Progression 1.01;
+Transfinite Line {24} = nl2+1 Using Progression 1.01;
+Transfinite Line {-43} = nl2+1 Using Progression 1.01;
 
 // radially away from cylinder
 Transfinite Line{-9,-10,-11,-12,-13,59,64,69} = nr+1 Using Progression 1.5;
