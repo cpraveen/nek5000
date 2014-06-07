@@ -1069,6 +1069,7 @@ def add_face(v1,v2,ii):
 	    
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     tot_num_cells = len(cell_map)
+    print 'Number of cells =', tot_num_cells
     ofile  = open(ofilename + '.rea', "w")
     ## Put the mesh in a rea-file
     print 'Create the rea-file: %s\n' %(ofilename+'.rea')
@@ -1133,17 +1134,17 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     ofile.write('  ***** FLUID   BOUNDARY CONDITIONS ***** \n')
     f_str = " {0:s}  "
     if tot_num_cells < 1000:
-        f_str1 = "{0:3d}{1:3d}"
+        f_str1 = "{0:3d}"
     elif tot_num_cells < 100000:
-        f_str1 = "{0:5d}{1:1d}"
+        f_str1 = "{0:5d}"
     elif tot_num_cells < 1000000:
-        f_str1 = "{0:6d}{1:1d}"    
+        f_str1 = "{0:6d}"    
     f_str2 = "{0:14.7e}{1:14.7e}{2:14.7e}{3:14.7e}{4:14.7e}\n"
     for i in range(1, tot_num_cells + 1):
         for j in range(1, 2*dim + 1):
             bm = boundary_map[(i, j)]
             ofile.write(f_str.format(boundary_val_map[(i, j)]))
-            ofile.write(f_str1.format(i, j))
+            ofile.write(f_str1.format(i))
             ofile.write(f_str2.format(bm[0], bm[1], 0, 0, 0))
     if not temperature:
         ofile.write('  ***** NO THERMAL BOUNDARY CONDITIONS ***** \n')
