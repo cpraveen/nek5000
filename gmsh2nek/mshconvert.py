@@ -1,4 +1,8 @@
 #!/usr/bin python
+# This code is based off a code taken from here
+#       https://bitbucket.org/mikael_mortensen/nek5000-tools
+# If you find any bugs, please let me know at: cpraveen at gmail.com
+# Authors: Anant Diwakar, Praveen. C
 import sys
 import re
 from sets import Set
@@ -9,25 +13,10 @@ from pylab import find
 from operator import add
 from scipy.optimize import fsolve
 
-print "Converting from ANSYS Fluent format (.msh) to Nek5000, semtex or FEniCS format"
+print "Converting from Gmsh (.msh) to Nek5000 format"
 
 # Use regular expressions to identify sections and tokens found in a fluent file
-re_dimline  = re.compile(r"\(2\s(\d)\)")
-re_comment  = re.compile(r"\(0\s.*")
-re_zone0    = re.compile(r"\(10\s\(0\s(\w+)\s(\w+)\s(\d+)\s(\d+)\)\)")
-re_zone     = re.compile(r"\(10\s\((\w+)\s(\w+)\s(\w+)\s(\d+)\s(\d)\)(\(|)")
-re_face0    = re.compile(r"\(13(\s*)\(0\s+(\w+)\s+(\w+)\s+(0|0 0)\)\)")
-re_face     = re.compile(r"\(13(\s*)\((\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\)(\s*)(\(|)")
-re_periodic = re.compile(r"\(18.*\((\w+)\s+(\w+)\s+(\w+)\s+(\w+)\).*\(")
 re_pfaces   = re.compile(r"((^\s)|)(\w+)(\s*)(\w+)")
-re_cells0   = re.compile(r"\(12(\s*)\(0(\s+)(\w+)(\s+)(\w+)(\s+)(0|0 0)\)\)")
-re_cells    = re.compile(r"\(12.*\((\w+)\s+(\w+)\s+(\w+)\s+(\d+)\s+(\d+)\)\)")
-re_cells2   = re.compile(r"\(12(\s*)\((\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\)(\s*)(\(|)")
-re_zones    = re.compile(r"\((45|39)\s+\((\d+)\s+(\S+)\s+(\S+).*\)\((.*|[0-9]+[\.]*[0-9]*)\)\)")
-re_parant   = re.compile(r"(^\s*\)(\s*)|^\s*\)\)(\s*)|^\s*\(\s*)")
-
-# The fluent mesh (the .msh file) is basically stored as a list of nodes, and then a 
-# list of faces for each zone of the mesh, the interior and the boundaries.
 
 # Declare som maps that will be built when reading in the lists of nodes and faces:
 cell_map = {}               # Maps cell id with nodes
