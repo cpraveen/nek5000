@@ -18,6 +18,8 @@ print "Converting from Gmsh (.msh) to Nek5000 format"
 # Use regular expressions to identify sections and tokens found in a fluent file
 re_pfaces   = re.compile(r"((^\s)|)(\w+)(\s*)(\w+)")
 
+second_order = False
+
 # Declare som maps that will be built when reading in the lists of nodes and faces:
 cell_map = {}               # Maps cell id with nodes
 cell_face_map = {}          # Maps cell id with faces
@@ -25,6 +27,7 @@ face_cell_map = {}          # Maps face id with two cells
 face_list = []              # List of faces [[id, 2-4 nodes, 2 connecting cells and type]]
 face_map = {}               # For each cell a dictionary with key=face and val=local face number
 nodes = None                # Will be numpy array of nodes
+nodes_mid = None            # Will be numpy array of nodes
 
 # Information about connectivity and boundaries
 boundary_map = {}           # For each cell and local face number, get connected cell and local face number
@@ -39,7 +42,6 @@ periodic_cell_face_map = {} # Map (cell, local face number) of periodic face to 
 periodic_node_map = {}      # Periodic node to node map
 
 # Some global values
-zones = {}                  # zone information
 zone_number_of_faces = {}   # number of faces for each zone
 
 # For Nek5000
@@ -299,18 +301,23 @@ def read_faces(Nmin, Nmax):
         nd  = 0
         nds = [face[i][2], face[i][3]]
         cells = [face[i][4], face[i][5]]
+        vm = face[i][6] # mid point of face
           
 	bc_tag = face[i][1]  # boundary tag 
         zone_id = bc_tag
 
 	if face[i][5] == 0 :# C1 index for boundary
-	    face_list.append([nd, copy(nds), copy(cells), bc_tag, zone_id]) # boundary face
+	    face_list.append([nd, copy(nds), copy(cells), bc_tag, zone_id, vm]) # boundary face
             if zone_id in zone_number_of_faces:
                 zone_number_of_faces[zone_id] += 1
             else:
                 zone_number_of_faces[zone_id] = 1
 	else:
-	    face_list.append([nd, copy(nds), copy(cells), -1, -1]) # interior face
+	    face_list.append([nd, copy(nds), copy(cells), -1, -1, vm]) # interior face
+            if zone_id in zone_number_of_faces:
+                zone_number_of_faces[zone_id] += 1
+            else:
+                zone_number_of_faces[zone_id] = 1
 
         if len(nds) == 2:
             face_cell_map[(nds[0], nds[1])] = copy(cells)
@@ -622,7 +629,7 @@ def create_boundary_section(bcs, temperature, passive_scalars, mesh_format):
         bcs_copy = bcs
 
     for face_number, face in enumerate(face_list):
-        nd, nds, cells, bc_type, zone_id = face
+        nd, nds, cells, bc_type, zone_id, mid = face
 
         if min(cells) == 0: # Boundary face
             c = max(cells)
@@ -648,11 +655,6 @@ def create_boundary_section(bcs, temperature, passive_scalars, mesh_format):
                 else:
                     print 'Error: no bc given for zone =', zone_id
                     sys.exit()
-                if not bcs:
-                    print 'Error: bcs must be given'
-                    sys.exit()
-                    boundary_val_map[(c, local_face)] = zones[zone_id][1][-1]
-                    bcs_copy[zone_id] = zones[zone_id][1][-1]
                 if temperature:
                     temperature_val_map[(c, local_face)] =  \
                                                     temperature[zone_id]
@@ -772,6 +774,27 @@ def read_curved_sides(curves):
             curve['x'] = list(Set(spline))            
         curves_map[curve_zone] = (cell_face_m, curve)
         
+def make_mid_curves(curves):
+    print 'TODO'
+    cell_face_m = {}
+    for curve_zone in curves:
+        curved_faces[curve_zone] = []
+        cell_face_m[curve_zone] = []
+    # Loop over all faces
+    for face_number in range(1,len(face_list)+1):
+        face = face_list[face_number-1]
+        cell = max(face[2])
+        nds = face[1]
+        curve_zone = face[3]
+        cell_face_m[curve_zone].append((cell, face_map[cell][(nds[0], nds[1])], face_number)) 
+        curved_faces[curve_zone].append(face_number)
+        vm = face[5]
+        x, y = nodes_mid[0,vm-1], nodes_mid[1,vm-1]
+        mid_point_map[face_number] = (x,y,0.0,0.0,0.0)
+    for curve_zone in curves:
+        curved_faces[curve_zone] = list(Set(curved_faces[curve_zone])) 
+        curves_map[curve_zone] = (cell_face_m[curve_zone], curves[curve_zone])
+
 def barycentric_weight(y):
     N = len(y)
     w = ones(N, float)
@@ -891,6 +914,7 @@ def find_mid_point(curve_zone, curve):
 def scan_gmsh_mesh(ifile):  
     """Scan gmsh mesh and generate numerous maps."""
     dim  = 2
+    global second_order
 
     # skip four lines
     line = ifile.readline()
@@ -903,7 +927,7 @@ def scan_gmsh_mesh(ifile):
     print 'Number of vertices =', num_vertices
 
     # read node coordinates
-    global nodes  
+    global nodes, nodes_mid
     nodes = zeros((dim, num_vertices))
     
     for i in range(num_vertices):
@@ -937,8 +961,7 @@ def scan_gmsh_mesh(ifile):
     face = ([])  #face list
     cell = ([])  #cell list
 
-    #face = [[0 for x in xrange(4)] for x in xrange(1)]  #face list
-    #cell = [[0 for x in xrange(6)] for x in xrange(1)]	#cell list
+    node_status = -ones(num_vertices+1,'i')
 
     for e in range(nelem):
         ii = ifile.readline().split()
@@ -949,11 +972,23 @@ def scan_gmsh_mesh(ifile):
 	    no_of_tags = int(ii[2])
 	    vertex1 = int(ii[ 3 + no_of_tags])
 	    vertex2 = int(ii[ 3 + no_of_tags + 1]) 	
+            vertex3 = 0
 	    
-	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1])  
+	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1, vertex3])  
 	    face_count = face_count + 1
 
-	elif int(ii[1]) == 3:  #quad elements
+	elif int(ii[1]) == 8:  # second order line
+
+	    boundary_tag = int(ii[3])
+	    no_of_tags = int(ii[2])
+	    vertex1 = int(ii[ 3 + no_of_tags])
+	    vertex2 = int(ii[ 3 + no_of_tags + 1]) 	
+	    vertex3 = int(ii[ 3 + no_of_tags + 2]) 	
+	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1, vertex3])  
+	    face_count = face_count + 1
+            second_order = True
+
+	elif int(ii[1]) == 3:  # 4-node quad elements
 
 	    surface_tag = int(ii[3])
 	    no_of_tags = int(ii[2])
@@ -966,6 +1001,39 @@ def scan_gmsh_mesh(ifile):
 
 	    cell.append([cell_count, surface_tag, cell_type, vertex1, vertex2, vertex3, vertex4])
 	    cell_count = cell_count + 1
+
+	elif int(ii[1]) == 16:  # 8-node quad elements
+
+	    surface_tag = int(ii[3])
+	    no_of_tags = int(ii[2])
+	    cell_type = int(ii[1])
+
+            # vertices
+	    vertex1 = int(ii[ 3 + no_of_tags])
+	    vertex2 = int(ii[ 3 + no_of_tags + 1])
+	    vertex3 = int(ii[ 3 + no_of_tags + 2])
+	    vertex4 = int(ii[ 3 + no_of_tags + 3])
+
+            # mid points
+	    vertex5 = int(ii[ 3 + no_of_tags + 4])
+	    vertex6 = int(ii[ 3 + no_of_tags + 5])
+	    vertex7 = int(ii[ 3 + no_of_tags + 6])
+	    vertex8 = int(ii[ 3 + no_of_tags + 7])
+
+	    cell.append([cell_count, surface_tag, cell_type, 
+                         vertex1, vertex2, vertex3, vertex4,
+                         vertex5, vertex6, vertex7, vertex8])
+	    cell_count = cell_count + 1
+
+            node_status[vertex1] = 0
+            node_status[vertex2] = 0
+            node_status[vertex3] = 0
+            node_status[vertex4] = 0
+            node_status[vertex5] = 1
+            node_status[vertex6] = 1
+            node_status[vertex7] = 1
+            node_status[vertex8] = 1
+            second_order = True
 
 	elif int(ii[1]) == 2:  #triangular elements
 	    print 'Triangular element not implemeneted yet'
@@ -986,15 +1054,53 @@ def scan_gmsh_mesh(ifile):
 	    print 'Other element types not implemeneted yet'
 	    sys.exit()
 
+    if second_order:
+        print 'Second order grid found'
+        nodes_tmp = nodes
+        nodes_mid = zeros((dim,num_vertices))
+        new_num = zeros(num_vertices+1,'i')
+        c = 0
+        cm= 0
+        for i in range(1,num_vertices+1):
+            if node_status[i] == 0:
+                nodes[:,c] = nodes_tmp[:,i-1]
+                c += 1
+                new_num[i] = c
+            elif node_status[i] == 1:
+                nodes_mid[:,cm] = nodes_tmp[:,i-1]
+                cm += 1
+                new_num[i] = cm
+            else:
+                print 'Error in new_num'
+                sys.exit()
+        nodes = nodes[:,0:c]
+        nodes_mid = nodes_mid[:,0:cm]
+        num_vertices = c
+        print 'Number of actual vertices =', num_vertices
+        print 'Number of mid    vertices =', cm
+        for i in range(len(cell)):
+            cell[i][3] = new_num[ cell[i][3] ]
+            cell[i][4] = new_num[ cell[i][4] ]
+            cell[i][5] = new_num[ cell[i][5] ]
+            cell[i][6] = new_num[ cell[i][6] ]
+            cell[i][7] = new_num[ cell[i][7] ]
+            cell[i][8] = new_num[ cell[i][8] ]
+            cell[i][9] = new_num[ cell[i][9] ]
+            cell[i][10] = new_num[ cell[i][10] ]
+        for i in range(len(face)):
+            face[i][2] = new_num[ face[i][2] ]
+            face[i][3] = new_num[ face[i][3] ]
+            face[i][6] = new_num[ face[i][6] ]
+
     create_gmsh_face_list()
     num_faces = len(face)
     read_faces(0,num_faces-1)
 	            
 def create_gmsh_face_list():
 
-    #print cell[0][4]
-    #print face[0][2], face[0][3]
+    global second_order
 
+    print 'Creating faces'
     for i in range(cell_count) :
 
 	if cell[i][2] == 2: # triangular elements
@@ -1002,23 +1108,39 @@ def create_gmsh_face_list():
 	    print ' triangles not implemented yet'
 	    sys.exit()
 
-	elif cell[i][2] == 3: # quad elements
+	elif cell[i][2] == 3 or cell[i][2] == 16: # quad elements
 
 	    vertex1 = cell[i][3]
 	    vertex2 = cell[i][4]
-	    add_face(vertex1, vertex2,i)
+            if second_order:
+                mid     = cell[i][7]
+	        add_face(vertex1, vertex2,i,mid)
+            else:
+	        add_face(vertex1, vertex2,i)
 
 	    vertex1 = cell[i][4]
 	    vertex2 = cell[i][5]
-	    add_face(vertex1, vertex2,i)
+            if second_order:
+                mid     = cell[i][8]
+	        add_face(vertex1, vertex2,i,mid)
+            else:
+	        add_face(vertex1, vertex2,i)
 	
 	    vertex1 = cell[i][5]
 	    vertex2 = cell[i][6]
-	    add_face(vertex1, vertex2,i)
+            if second_order:
+                mid     = cell[i][9]
+	        add_face(vertex1, vertex2,i,mid)
+            else:
+	        add_face(vertex1, vertex2,i)
 
 	    vertex1 = cell[i][6]
 	    vertex2 = cell[i][3]
-	    add_face(vertex1, vertex2,i)
+            if second_order:
+                mid     = cell[i][10]
+	        add_face(vertex1, vertex2,i,mid)
+            else:
+	        add_face(vertex1, vertex2,i)
 	else :
 	    print ' node type not implemented yet'
 	    sys.exit()
@@ -1035,7 +1157,7 @@ def create_gmsh_face_list():
 
     #print 'face list', face
 
-def add_face(v1,v2,ii):
+def add_face(v1,v2,ii,vm=0):
 
     global face_count
 
@@ -1059,7 +1181,7 @@ def add_face(v1,v2,ii):
 	    continue  #continue the face loop
 		
     #print 'New face found',ii, v1, v2
-    face.append([face_count, -1, v1, v2, ii+1, -1])
+    face.append([face_count, -1, v1, v2, ii+1, -1, vm])
     face_count = face_count + 1
 	    
 def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
@@ -1168,11 +1290,9 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
     ofile.close()
 
 def convert(meshfile, 
-            func=None, 
-            mesh_format='nek5000',                     # nek5000, semtex or fenics
-            periodic_dx={}, curves = {}, bcs = False,  # nek5000 and semtex
-            temperature=False, passive_scalars=[],     # nek5000 only
-            cylindrical=1, NZ=1):                      # semtex  only
+            mesh_format='nek5000',                     
+            periodic_dx={}, curves = {}, bcs = False,  
+            temperature=False, passive_scalars=[]):
     """Converts a fluent mesh to a mesh format that can be used by Nek5000,
        semtex or FEniCS. 
          
@@ -1278,24 +1398,14 @@ def convert(meshfile,
     #create_periodic_face_map(periodic_dx)
     #create_periodic_cell_face_map()
     create_boundary_section(bcs, temperature, passive_scalars, mesh_format)
-
-    # Modify the entire mesh using the shape-function func
-    if func:
-        sz = nodes.shape
-        for i in range(sz[1]):
-            x, y = nodes[:, i]
-            if 'x' in func:
-                xnew = func['x'](x, y)
-                if abs(xnew - x) > 1e-6:
-                    nodes[0, i] = xnew
-            if 'y' in func:
-                ynew = func['y'](x, y)
-                if abs(ynew - y) > 1e-6:
-                    nodes[1, i] = ynew
-        if mesh_format == 'nek5000':
-            print 'Warning!! Consider using userdat/userdat2 instead!'
-
-    read_curved_sides(curves)
+    if second_order:
+        print 'Argument curves is ignored since second order mesh'
+        curves = {}
+        for zone_id in zone_number_of_faces:
+            curves[zone_id] = {'type':'m'}
+        make_mid_curves(curves)
+    else:
+        read_curved_sides(curves)
 
     # Generate the mesh files for given mesh format
     write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars)
