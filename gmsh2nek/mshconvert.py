@@ -1183,14 +1183,21 @@ def add_face(v1,v2,ii,vm=0):
     face.append([face_count, -1, v1, v2, ii+1, -1, vm])
     face_count = face_count + 1
 	    
-def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
+def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars, start_rea, end_rea):
     tot_num_cells = len(cell_map)
     print 'Number of cells =', tot_num_cells
     ofile  = open(ofilename + '.rea', "w")
     ## Put the mesh in a rea-file
     print 'Create the rea-file: %s\n' %(ofilename+'.rea')
     print 'Writing the elements info\n'
-    ofile.write(start_of_rea.format(dim))
+    if not start_rea:
+        ofile.write(start_of_rea.format(dim))
+    else:
+        print "Reading ", start_rea
+        reafile = open(start_rea,"r")
+        start_of_rea = reafile.read()
+        reafile.close()
+        ofile.write(start_of_rea)
     ofile.write(' **MESH DATA**\n')
     ofile.write('       %s       %s       %s      NEL,NDIM,NELV\n' 
                                     %(tot_num_cells, dim, tot_num_cells))
@@ -1283,7 +1290,14 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
                     ofile.write(f_str %(passive_scalar_val_map[si][(i, j)], i, 
                                         j, bm[0], bm[1], 0, 0, 0))
     
-    ofile.write(end_of_rea)
+    if not end_rea:
+        ofile.write(end_of_rea)
+    else:
+        print "Reading ", end_rea
+        reafile = open(end_rea,"r")
+        end_of_rea = reafile.read()
+        reafile.close()
+        ofile.write(end_of_rea)
     print 'Finished writing the rea-file\n'
     # Close files
     ofile.close()
@@ -1291,7 +1305,8 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars):
 def convert(meshfile, 
             mesh_format='nek5000',                     
             periodic_dx={}, curves = {}, bcs = False,  
-            temperature=False, passive_scalars=[]):
+            temperature=False, passive_scalars=[],
+            start_rea=False, end_rea=False):
     """Converts a fluent mesh to a mesh format that can be used by Nek5000,
        semtex or FEniCS. 
          
@@ -1407,6 +1422,7 @@ def convert(meshfile,
         read_curved_sides(curves)
 
     # Generate the mesh files for given mesh format
-    write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars)
+    write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars,
+                       start_rea, end_rea)
 
     ifile.close()
