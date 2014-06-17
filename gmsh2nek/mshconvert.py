@@ -314,10 +314,11 @@ def read_faces(Nmin, Nmax):
                 zone_number_of_faces[zone_id] = 1
 	else:
 	    face_list.append([nd, copy(nds), copy(cells), -1, -1, vm]) # interior face
+            # interior face is counted twice since it belongs to two cells
             if zone_id in zone_number_of_faces:
-                zone_number_of_faces[zone_id] += 1
+                zone_number_of_faces[zone_id] += 2
             else:
-                zone_number_of_faces[zone_id] = 1
+                zone_number_of_faces[zone_id] = 2
 
         if len(nds) == 2:
             face_cell_map[(nds[0], nds[1])] = copy(cells)
@@ -782,10 +783,15 @@ def make_mid_curves(curves):
     # Loop over all faces
     for face_number in range(1,len(face_list)+1):
         face = face_list[face_number-1]
-        cell = max(face[2])
         nds = face[1]
         curve_zone = face[3]
-        cell_face_m[curve_zone].append((cell, face_map[cell][(nds[0], nds[1])], face_number)) 
+        if curve_zone == -1: # interior edge
+            cell0, cell1 = face[2][0], face[2][1]
+            cell_face_m[curve_zone].append((cell0, face_map[cell0][(nds[0], nds[1])], face_number)) 
+            cell_face_m[curve_zone].append((cell1, face_map[cell1][(nds[0], nds[1])], face_number)) 
+        else: # boundary edge
+            cell = max(face[2])
+            cell_face_m[curve_zone].append((cell, face_map[cell][(nds[0], nds[1])], face_number)) 
         curved_faces[curve_zone].append(face_number)
         vm = face[5]
         x, y = nodes_mid[0,vm-1], nodes_mid[1,vm-1]
@@ -961,6 +967,10 @@ def scan_gmsh_mesh(ifile):
     cell = ([])  #cell list
 
     node_status = -ones(num_vertices+1,'i')
+    has_line2 = False
+    has_line3 = False
+    has_quad4 = False
+    has_quad8 = False
 
     for e in range(nelem):
         ii = ifile.readline().split()
@@ -975,6 +985,7 @@ def scan_gmsh_mesh(ifile):
 	    
 	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1, vertex3])  
 	    face_count = face_count + 1
+            has_line2 = True
 
 	elif int(ii[1]) == 8:  # second order line
 
@@ -986,6 +997,7 @@ def scan_gmsh_mesh(ifile):
 	    face.append([face_count, boundary_tag, vertex1, vertex2, -1, -1, vertex3])  
 	    face_count = face_count + 1
             second_order = True
+            has_line3 = True
 
 	elif int(ii[1]) == 3:  # 4-node quad elements
 
@@ -1000,6 +1012,7 @@ def scan_gmsh_mesh(ifile):
 
 	    cell.append([cell_count, surface_tag, cell_type, vertex1, vertex2, vertex3, vertex4])
 	    cell_count = cell_count + 1
+            has_quad4 = True
 
 	elif int(ii[1]) == 16:  # 8-node quad elements
 
@@ -1033,6 +1046,7 @@ def scan_gmsh_mesh(ifile):
             node_status[vertex7] = 1
             node_status[vertex8] = 1
             second_order = True
+            has_quad8 = True
 
 	elif int(ii[1]) == 2:  #triangular elements
 	    print 'Triangular element not implemeneted yet'
@@ -1052,6 +1066,14 @@ def scan_gmsh_mesh(ifile):
 	else :
 	    print 'Other element types not implemeneted yet'
 	    sys.exit()
+
+    if has_line2 and has_line3:
+        print "Cannot have both 2-node and 3-node lines"
+        sys.exit()
+
+    if has_quad4 and has_quad8:
+        print "Cannot have both 4-node and 8-node quad"
+        sys.exit()
 
     if second_order:
         print 'Second order grid found'
@@ -1191,6 +1213,7 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars, sta
     print 'Create the rea-file: %s\n' %(ofilename+'.rea')
     print 'Writing the elements info\n'
     if not start_rea:
+        global start_of_rea
         ofile.write(start_of_rea.format(dim))
     else:
         print "Reading ", start_rea
@@ -1232,7 +1255,8 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars, sta
         if curves_map[zone][1]['type'] == 'C':
             N += len(curves_map[zone][0])
         elif curves_map[zone][1]['type'] == 'm':
-            N += len(curved_faces[zone])
+            #N += len(curved_faces[zone])
+            N += len(curves_map[zone][0])
     ofile.write(cc.format(N))
     for zone in curves:
         if curves_map[zone][1]['type'] == 'C':
@@ -1291,6 +1315,7 @@ def write_nek5000_file(dim, ofilename, curves, temperature, passive_scalars, sta
                                         j, bm[0], bm[1], 0, 0, 0))
     
     if not end_rea:
+        global end_of_rea
         ofile.write(end_of_rea)
     else:
         print "Reading ", end_rea

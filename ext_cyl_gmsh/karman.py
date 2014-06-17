@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../gmsh2nek')
 from mshconvert import *
 
 radius = 0.05
