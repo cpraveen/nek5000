@@ -21,3 +21,10 @@ $ nekbmpi naca0012 4
 You can look into log file for the progress
 
 $ tail -f naca0012.log.4
+
+Solution is saved periodically. You can visualize using visit.
+
+$ visnek naca0012
+$ visit (open the naca0012.nek5000 file)
+
+Vorticity is saved in the temperature variable

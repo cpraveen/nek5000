@@ -59,17 +59,34 @@ c-----------------------------------------------------------------------
       subroutine userchk
       include 'SIZE'
       include 'TOTAL'
+      parameter(lt=lx1*ly1*lz1*lelv)
+      common /scrns/ vort(lt,3),w1(lt),w2(lt)
 
       real x0(3)
       save x0
       data x0 /3*0/
 
-c     if (istep.eq.0) call set_obj  ! define objects for surface integrals
+      if (istep.eq.0) call set_obj  ! define objects for surface integrals
 
 c     call estimate_strouhal
 
-c     scale = 2.  ! Cd = F/(.5 rho U^2 ) = 2*F
-c     if (mod(istep,10).eq.0) call torque_calc(scale,x0,.true.,.false.)
+      scale = 2.  ! Cd = F/(.5 rho U^2 ) = 2*F
+      if (mod(istep,10).eq.0) call torque_calc(scale,x0,.true.,.false.)
+
+c     save initial condition
+      ifxyo = .false.
+      ifto  = .true.
+      n = nx1*ny1*nz1*nelv
+      k = 1
+      if(istep.eq.0)then
+         call comp_vort3(vort,w1,w2,vx,vy,vz)
+         call copy(t(1,1,1,1,k),vort,n)
+         ifxyo = .true.
+         call outpost(vx,vy,vz,pr,t,'   ')
+      else if(mod(istep,iostep).eq.0)then
+         call comp_vort3(vort,w1,w2,vx,vy,vz)
+         call copy(t(1,1,1,1,k),vort,n)
+      endif
 
       return
       end
