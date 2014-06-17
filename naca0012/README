@@ -1,0 +1,17 @@
+Generate mesh
+
+$ gmsh -2 naca0012.geo
+
+Convert to rea
+
+$ python naca0012.py
+
+Run genmap
+
+$ genmap
+
+Compile nek
+
+$ makenek naca0012
+
+Run nek
