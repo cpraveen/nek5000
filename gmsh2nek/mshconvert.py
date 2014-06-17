@@ -775,7 +775,6 @@ def read_curved_sides(curves):
         curves_map[curve_zone] = (cell_face_m, curve)
         
 def make_mid_curves(curves):
-    print 'TODO'
     cell_face_m = {}
     for curve_zone in curves:
         curved_faces[curve_zone] = []
