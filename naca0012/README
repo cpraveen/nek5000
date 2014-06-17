@@ -6,7 +6,7 @@ Convert to rea
 
 $ python naca0012.py
 
-Run genmap
+Run genmap and enter some tolerance, e.g., 0.01
 
 $ genmap
 
@@ -16,4 +16,8 @@ $ makenek naca0012
 
 Run nek, e.g., using 4 processor mpi
 
-$ nekmpi naca0012 4
+$ nekbmpi naca0012 4
+
+You can look into log file for the progress
+
+$ tail -f naca0012.log.4
