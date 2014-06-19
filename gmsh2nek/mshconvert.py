@@ -1183,23 +1183,29 @@ def add_face(v1,v2,ii,vm=0):
     global face_count
 
     for i in range(face_count):
-	
-	if (face[i][2] == v1 and face[i][3] == v2) or \
-	    (face[i][2] == v2 and face[i][3] == v1):
-		
-	    #print 'v1, v2', v1, v2
-	    if face[i][1]!=-1:  #boundary faces
 
-		face[i][4] = ii+1 #C0 index
-		face[i][5] = 0  #C1 index
-	    else:
-		if face[i][4] == -1:
+	# Check whether C0 and C1 has been assigned
+	# This condition makes code a bit faster
+	if (face[i][4] == -1 or face[i][5] == -1): 
+	
+	    if (face[i][2] == v1 and face[i][3] == v2) or \
+		(face[i][2] == v2 and face[i][3] == v1):
+		
+		#print 'v1, v2', v1, v2
+		if face[i][1]!=-1:  #boundary faces
+
 		    face[i][4] = ii+1 #C0 index
+		    face[i][5] = 0  #C1 index
 		else:
-		    face[i][5] = ii+1 #C1 index
-	    return
-	else :
-	    continue  #continue the face loop
+		    if face[i][4] == -1:
+			face[i][4] = ii+1 #C0 index
+		    else:
+			face[i][5] = ii+1 #C1 index
+		return
+	    else :
+		continue  #continue the face loop
+	else:
+	    continue #continue the face loop
 		
     #print 'New face found',ii, v1, v2
     face.append([face_count, -1, v1, v2, ii+1, -1, vm])
