@@ -28,3 +28,9 @@ $ visnek naca0012
 $ visit (open the naca0012.nek5000 file)
 
 Vorticity is saved in the temperature variable
+
+To compute frequencies from force history
+
+$ grep drag naca0012.log.4 > clcd.txt
+
+Then run get_freq.m in matlab.

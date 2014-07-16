@@ -1,19 +1,14 @@
-load cl.txt;  % Cl/Cd text file
-t = cl(:,2);  % time column
-ke = cl(:,3); % Cl/Cd column
-%te = cl(:,4);
-
-%ke = sqrt(ke);
-%te = sqrt(te);
+load clcd.txt;  % Cl/Cd text file
+t = clcd(:,2);  % time column
+cl = clcd(:,3); % Cl/Cd column
 
 % skip initial data since there may be some transients
-x = ke(200:end);
+x = cl(200:end);
 
 % make length(x) to be multiple of two
 if mod(length(x),2) ~= 0
    x = x(1:end-1);
 end
-
 
 Fs = 1.0/(t(2)-t(1));
 x = detrend(x,0);
