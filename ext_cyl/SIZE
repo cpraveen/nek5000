@@ -100,4 +100,9 @@ c automatically added by makenek
       parameter (ax1=lx1,ay1=ly1,az1=lz1,ax2=lx2,ay2=ly2,az2=lz2) ! running averages
 
 c automatically added by makenek
-      parameter (lxs=lx1+2,lys=ly1+2,lzs=lz1+2*(ldim-2)) !New Pressure Preconditioner
+
+c automatically added by makenek
+      parameter (lxs=1,lys=lxs,lzs=(lxs-1)*(ldim-2)+1) !New Pressure Preconditioner
+
+c automatically added by makenek
+      parameter (lfdm=0)  ! == 1 for fast diagonalization method
