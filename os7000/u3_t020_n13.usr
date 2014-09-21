@@ -25,7 +25,7 @@ c-----------------------------------------------------------------------
       include 'NEKUSE' 
 
       visc=param(2)
-      ffx = 2.0*visc
+      ffx = 0.0*visc
       ffy = 0.0
       ffz = 0.0
                                                                                
@@ -52,6 +52,7 @@ c-----------------------------------------------------------------------
       include 'INPUT'  
       include 'GEOM' 
       include 'NEKUSE' 
+      common /ppointr/ jp
 
       common /corrsom/ Yvec(65),uvec(65,4),work(65,4)
       common /rorrsom/ alpha,omega,eps,vmaxi
@@ -236,7 +237,7 @@ c     call exitti ('quit userchk to dump perturbation field',nelv)
       do 110 i=1,ntot
          y=ym1(i,1,1,1)
          u0 = 1.0-y**2
-         u2(i) = vxp(i,1,1,1)**2 + vyp(i,1,1,1)**2
+         u2(i) = vxp(i,1)**2 + vyp(i,1)**2
   110 continue
 
       if (istep.gt.0) then
@@ -277,6 +278,14 @@ c     compute total energy growth (long time avg)
        if (umax.gt.10) then
           write(6,*) nid,' umax:',umax,ntot
           call emerxit
+       endif
+
+       ifxyo = .false.
+       if(istep.eq.0)then
+          ifxyo = .true.
+          call out_pert()
+       else if(mod(istep,iostep).eq.0)then
+          call out_pert()
        endif
 
        return
