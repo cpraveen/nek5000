@@ -27,17 +27,19 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'TOTAL'
       include 'NEKUSE'
+      common/sfd/chi, delta
+      common/avgflow/vxb(lx1,ly1,lz1,lelv), vyb(lx1,ly1,lz1,lelv)
 
       integer e,f,eg
-c     e = gllel(eg)
 
+c     global element number to processor-local element number
+      e = gllel(eg)
 
 c     Note: this is an acceleration term, NOT a force!
 c     Thus, ffx will subsequently be multiplied by rho(x,t).
 
-
-      ffx = 0.0
-      ffy = 0.0
+      ffx = -chi*(ux - vxb(ix,iy,iz,e))
+      ffy = -chi*(uy - vyb(ix,iy,iz,e))
       ffz = 0.0
 
       return
@@ -59,6 +61,11 @@ c-----------------------------------------------------------------------
       subroutine userchk
       include 'SIZE'
       include 'TOTAL'
+      common/sfd/chi, delta
+      common/avgflow/vxb(lx1,ly1,lz1,lelv), vyb(lx1,ly1,lz1,lelv)
+      parameter (lt=lx1*ly1*lz1*lelt)
+      common /vold/ uo(lt),vo(lt),wo(lt)
+      real linf,l2,h1,semi
 
       real x0(3)
       save x0
@@ -70,6 +77,31 @@ c-----------------------------------------------------------------------
 
       scale = 2.  ! Cd = F/(.5 rho U^2 ) = 2*F
       if (mod(istep,10).eq.0) call torque_calc(scale,x0,.true.,.false.)
+
+      n = nx1*ny1*nz1*nelv
+      if(iostep.eq.0)then
+         call copy(vxb,vx,n)
+         call copy(vyb,vy,n)
+      endif
+
+c     update average flow: d(vxb)/dt = (vx - vxb)/delta
+c     Backward euler: vxb(k) - vxb(k-1) = (vx - vxb(k))*dt/delta
+      f1 = dt/delta
+      f2 = 1.0 + f1
+      do i=1,n
+         vxb(i,1,1,1) = (f1*vx(i,1,1,1) + vxb(i,1,1,1))/f2
+         vyb(i,1,1,1) = (f1*vy(i,1,1,1) + vyb(i,1,1,1))/f2
+      enddo
+
+c     check residual for convergence
+      if(istep.gt.0)then
+         call opsub2(uo,vo,wo,vx,vy,vz)
+         call normvc(H1,SEMI,L2,LINF,uo,vo,wo)
+         residu = L2/dt
+         if(nid.eq.0) write(6,20) istep, time, residu
+      endif
+      call opcopy(uo,vo,wo,vx,vy,vz)
+ 20   format(i9, 1p2e18.8, ' resnorm')
 
       return
       end
@@ -110,9 +142,16 @@ c-----------------------------------------------------------------------
       subroutine usrdat2
       include 'SIZE'
       include 'TOTAL'
+      common/sfd/chi, delta
 
 c     param(66) = 4.   ! These give the std nek binary i/o and are 
 c     param(67) = 4.   ! good default values
+
+c     parameters in selective frequency damping
+c     related to growth rate of instabilities
+c     larger value leads to slower convergence
+      chi   = 0.1
+      delta = 20.0
 
       return
       end
@@ -169,8 +208,8 @@ c-----------------------------------------------------------------------
       ux = glamax(vx,n)
       uy = glamax(vy,n)
 
-      if (nid.eq.0.and.st.gt.0) write(6,1) istep,time,st,ux,uy
-    1 format(i5,1p4e12.4,' Strouhal')
+      if (nid.eq.0) write(6,1) istep,time,st,ux,uy
+    1 format(i8,1p4e12.4,' Strouhal')
 
       return
       end
