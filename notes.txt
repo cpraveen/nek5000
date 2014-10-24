@@ -1,0 +1,16 @@
+-------------------------------------------------------------------------------
+Boundary condition
+-------------------------------------------------------------------------------
+
+* "O" boundary condition
+
+  In P(n)-P(n-2), this is natural boundary condition, i.e.
+
+  -p*n + mu*du/dn = 0                   (in laplace formulation)
+  -p*n + mu*(grad(u) + grad(u)^T)*n = 0 (in stress  formulation)
+
+  In P(n)-P(n) formulation this is
+
+  p = 0, du/dn = 0
+
+  Ref: http://lists.mcs.anl.gov/pipermail/nek5000-users/2014-May/002758.html
