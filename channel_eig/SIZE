@@ -25,7 +25,7 @@ c     parameter (lpelv=lelv,lpelt=lelt,lpert=3)  ! perturbation
 c     parameter (lpx1=lx1,lpy1=ly1,lpz1=lz1)     ! array sizes
 c     parameter (lpx2=lx2,lpy2=ly2,lpz2=lz2)
 c
-      parameter (lpelv=lelv,lpelt=lelt,lpert=1)      ! perturbation
+      parameter (lpelv=lelv,lpelt=lelt,lpert=2)      ! perturbation
       parameter (lpx1=lx1,lpy1=ly1,lpz1=1)           ! array sizes
       parameter (lpx2=lx2,lpy2=ly2,lpz2=1)
 c

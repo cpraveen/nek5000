@@ -11,11 +11,11 @@
       0.0000000E+00     p07 RHOCP
        1.000000         p08 CONDUCT
       0.0000000E+00
-       200.0000         p10 FINTIME
-      0.0000000E+00     p11 NSTEPS
+         0.0000         p10 FINTIME
+      1.0000000E+01     p11 NSTEPS
      -2.0000000E-03     p12 DT
       0.0000000E+00     p13 IOCOMM
-       50.00000         p14 IOTIME
+        0.00000         p14 IOTIME
       0.0000000E+00     p15 IOSTEP
       0.0000000E+00     p16 PSSOLVER
       0.0000000E+00
@@ -32,7 +32,7 @@
       0.0000000E+00     p28 TORDER: mesh velocity (0: p28=p27)
       0.0000000E+00     p29 magnetic visc if > 0, = -1/Rm if < 0
       0.0000000E+00     p30 > 0 ==> properties set in uservp()
-      1.0000000E+00     p31 NPERT: #perturbation modes
+      2.0000000E+00     p31 NPERT: #perturbation modes
       0.0000000E+00     p32 #BCs in re2 file, if > 0
       0.0000000E+00
       0.0000000E+00

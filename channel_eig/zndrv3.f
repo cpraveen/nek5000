@@ -60,7 +60,7 @@ c     | MAXNCV: Maximum NCV allowed |
 c     %-----------------------------%
 c
       integer           lx1, ly1, lz1, lelv, ltot1
-      parameter         (lx1=10, ly1=lx1, lz1=1, lelv=100, 
+      parameter         (lx1=14, ly1=lx1, lz1=1, lelv=15, 
      &                   ltot1=lx1*ly1*lz1*lelv)
       integer           maxn, maxnev, maxncv, ldv
       parameter         (maxn=2*ltot1, maxnev=10, maxncv=25, 
@@ -142,7 +142,7 @@ c
          go to 9000
       end if
       bmat  = 'G'
-      which = 'LM'
+      which = 'SM'
       sigma = zero
 c
 c     %-----------------------------------------------------%
@@ -180,7 +180,7 @@ c     | documentation in ZNAUPD.                          |
 c     %---------------------------------------------------%
 c
       ishfts = 1
-      maxitr = 300
+      maxitr = 10
       mode   = 2
 c
       iparam(1) = ishfts
@@ -392,8 +392,9 @@ c
       Complex*16            
      &                  v(n), w(n)
 c
-c     Compute the matrix vector multiplication y<---M*A*x
+c     Compute the matrix vector multiplication y<---A*x
 c
+      print*,'Calling M*E*x'
       imode = 2
       call time_stepper(imode, n, v, w)
       return
@@ -406,8 +407,9 @@ c
       Complex*16            
      &                  v(n), w(n)
 c
-c     Compute the matrix vector multiplication y<---A*x
+c     Compute the matrix vector multiplication y<---inv(M)*A*x
 c
+      print*,'Calling E*x'
       imode = 3
       call time_stepper(imode, n, v, w)
       return
@@ -421,6 +423,7 @@ c
 c     Compute the matrix vector multiplication y<---M*x
 c     where M is the mass matrix
 c 
+      print*,'Calling M*x'
       imode = 1
       call time_stepper(imode, n, v, w)
 
@@ -436,15 +439,27 @@ c------------------------------------------------------------------------
       n1  = n/2
       fid = 20
       open(fid, file='veci.dat')
-      write(fid,*) imode, n
-      write(fid,*)(v(i),   i=1,n1)
-      write(fid,*)(v(i+n1),i=1,n1)
+      write(fid,*) imode, n1
+      write(fid,*)(real(v(i)),    i=1,n1)  ! x velocity
+      write(fid,*)(real(v(i+n1)), i=1,n1)  ! y velocity
+      write(fid,*)(aimag(v(i)),   i=1,n1)  ! x velocity
+      write(fid,*)(aimag(v(i+n1)),i=1,n1)  ! y velocity
       close(fid)
 
-      call system("runnek.sh")
+      call system("./runnek.sh")
 
       open(fid, file='veco.dat', status='old')
-      read(fid,*)(w(i),i=1,n)
+c     x velocity component
+      do i=1,n1
+         read(fid,*) a1, a2
+         w(i) = complex(a1,a2)
+      enddo
+c     y velocity component
+      do i=1,n1
+         read(fid,*) a1, a2
+         w(i+n1) = complex(a1,a2)
+      enddo
+
       close(fid)
 
       return
