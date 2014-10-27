@@ -438,7 +438,7 @@ c------------------------------------------------------------------------
 
       n1  = n/2
       fid = 20
-      open(fid, file='veci.dat')
+      open(fid, file='nek/veci.dat')
       write(fid,*) imode, n1
       write(fid,*)(real(v(i)),    i=1,n1)  ! x velocity
       write(fid,*)(real(v(i+n1)), i=1,n1)  ! y velocity
@@ -448,7 +448,7 @@ c------------------------------------------------------------------------
 
       call system("./runnek.sh")
 
-      open(fid, file='veco.dat', status='old')
+      open(fid, file='nek/veco.dat', status='old')
 c     x velocity component
       do i=1,n1
          read(fid,*) a1, a2
