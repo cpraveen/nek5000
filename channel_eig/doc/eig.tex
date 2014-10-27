@@ -1,0 +1,68 @@
+\documentclass[12pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}		
+\usepackage{amssymb}
+
+\newcommand{\ud}{\textrm{d}}
+\newcommand{\dd}[2]{\frac{\ud #1}{\ud #2}}
+\newcommand{\Edt}{E_{\Delta t}}
+
+\title{Eigenvalue computation using time-stepper}
+\author{Praveen. C}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+\section{Eigenvalue problem}
+%\subsection{}
+Consider the linearized Navier-Stokes (LNS) equation
+\[
+M_1 \dd{v}{t} = A_1 v + B_1 p, \qquad B_1^\top v = 0
+\]
+After eliminating the pressure we obtain
+\[
+\dd{v}{t} = Av
+\]
+The exact solution of this equation is
+\[
+v(t) = \exp(A t) v_0 = E(t) v_0
+\]
+Let $\Edt$ be a numerical scheme to solve the LNS
+\[
+v_{n+1} = \Edt v_n, \qquad t_{n+1} = t_n + \Delta t
+\]
+Fix a time $\tau = N\Delta t$ and define
+\[
+E_\tau = (\Edt)^N
+\]
+i.e., $E_\tau$ corresponds to performing $N$ time steps of the numerical scheme.
+
+We want to solve the eigenvalue problem
+\[
+A e = \lambda e
+\]
+Instead let us consider the eigenvalue problem
+\[
+E_\tau e = \mu e
+\]
+The two eigenvalues are related by
+\[
+\mu = \exp(\lambda \tau)
+\]
+Hence
+\[
+\textrm{real}(\lambda) = \frac{1}{\tau} \log|\mu|, \qquad \textrm{imag}(\lambda) = \frac{1}{\tau} \textrm{arg}(\mu)
+\]
+In the Arnoldi method, the eigenvectors are normalized to unit norm. Since we want to use the $L^2$ norm we will consider the generalized eigenvalue problem
+\[
+M_1 E_\tau e = \mu M_1 e
+\]
+where $M_1$ is the mass matrix of velocity. Solving this generalized eigenvalue problem using ARPACK will give us eigenvectors whose $L^2(\Omega)$ norm is unity. Note that we only compute eigenvectors corresponding to velocity.
+
+\section{Plane Poiseuille flow}
+Consider a channel of dimensions $[-1,+1] \times [0, 2\pi]$. The base solution has the velocity $(1-y^2, 0)$. We use periodic boundary conditions in the $x$ direction.
+
+\end{document}  
