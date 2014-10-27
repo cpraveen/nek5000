@@ -1,6 +1,6 @@
 # make dssimp
 FC = gfortran
-OBJ = zndrv3.o
+OBJ = dndrv3.o
 
 #
 #
