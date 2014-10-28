@@ -419,7 +419,7 @@ c     matrix vector multiplication subroutine
 c
       subroutine av (n, v, w)
       integer           n
-      Complex*16            
+      double precision      
      &                  v(n), w(n)
 c
 c     Compute the matrix vector multiplication y<---A*x
@@ -434,7 +434,7 @@ c     matrix vector multiplication subroutine
 c
       subroutine op (n, v, w)
       integer           n
-      Complex*16            
+      double precision      
      &                  v(n), w(n)
 c
 c     Compute the matrix vector multiplication y<---inv(M)*A*x
@@ -447,7 +447,7 @@ c
 c------------------------------------------------------------------------
       subroutine mv (n, v, w)
       integer           n
-      Complex*16 
+      double precision
      &                  v(n), w(n)
 c
 c     Compute the matrix vector multiplication y<---M*x
@@ -462,7 +462,8 @@ c
 c------------------------------------------------------------------------
       subroutine time_stepper(imode, n, v, w)
       integer    imode, n
-      complex*16 v(n), w(n)
+      double precision
+     &           v(n), w(n)
 
       integer    fid, i
 
@@ -470,26 +471,14 @@ c------------------------------------------------------------------------
       fid = 20
       open(fid, file='nek/veci.dat')
       write(fid,*) imode, n1
-      write(fid,*)(real(v(i)),    i=1,n1)  ! x velocity
-      write(fid,*)(real(v(i+n1)), i=1,n1)  ! y velocity
-      write(fid,*)(aimag(v(i)),   i=1,n1)  ! x velocity
-      write(fid,*)(aimag(v(i+n1)),i=1,n1)  ! y velocity
+      write(fid,*)(v(i),    i=1,n1)  ! x velocity
+      write(fid,*)(v(i+n1), i=1,n1)  ! y velocity
       close(fid)
 
       call system("./runnek.sh")
 
       open(fid, file='nek/veco.dat', status='old')
-c     x velocity component
-      do i=1,n1
-         read(fid,*) a1, a2
-         w(i) = complex(a1,a2)
-      enddo
-c     y velocity component
-      do i=1,n1
-         read(fid,*) a1, a2
-         w(i+n1) = complex(a1,a2)
-      enddo
-
+      read(fid,*)(w(i),i=1,n)
       close(fid)
 
       return

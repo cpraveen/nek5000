@@ -54,9 +54,8 @@ c-----------------------------------------------------------------------
       include 'NEKUSE' 
       common /ppointr/ jp
 
-      real    vxin1(lx1,ly1,lz1,lelt), vyin1(lx1,ly1,lz1,lelt),
-     &        vxin2(lx1,ly1,lz1,lelt), vyin2(lx1,ly1,lz1,lelt)
-      common/rarpack/vxin1,vyin1,vxin2,vyin2
+      real    vxin(lx1,ly1,lz1,lelt), vyin(lx1,ly1,lz1,lelt)
+      common/rarpack/vxin,vyin
       integer iarpack_mode
       common/iarpack/iarpack_mode
 
@@ -84,23 +83,15 @@ c     Base flow
             write(6,*) 'Vector size dont match'
             call exitt()
          endif
-         read(ifid,*)(vxin1(i,1,1,1),i=1,ntot1)
-         read(ifid,*)(vyin1(i,1,1,1),i=1,ntot1)
-         read(ifid,*)(vxin2(i,1,1,1),i=1,ntot1)
-         read(ifid,*)(vyin2(i,1,1,1),i=1,ntot1)
+         read(ifid,*)(vxin(i,1,1,1),i=1,ntot1)
+         read(ifid,*)(vyin(i,1,1,1),i=1,ntot1)
          close(ifid)
 
       endif
 
-      if(jp.eq.1)then
-         ux = vxin1(ix,iy,iz,iel)
-         uy = vyin1(ix,iy,iz,iel)
-         uz = 0.0
-      else
-         ux = vxin2(ix,iy,iz,iel)
-         uy = vyin2(ix,iy,iz,iel)
-         uz = 0.0
-      endif
+      ux = vxin(ix,iy,iz,iel)
+      uy = vyin(ix,iy,iz,iel)
+      uz = 0.0
 
       return
       end   
@@ -148,12 +139,16 @@ c     call outpost(ux,uy,vz,pr,t,'   ')  ! base field
 c     call outpost(vx,vy,vz,pr,t,'   ')  ! perturbation field
 c     call exitti ('quit userchk to dump perturbation field',nelv)
 
+c     Make velocity continuous
+c     if(istep.eq.0)then
+c        call opdssum(vxp,vyp,vzp)
+c        call opcolv(vxp,vyp,vzp,vmult)
+c     endif
+
 c     Multiply with mass matrix and exit
       if(iarpack_mode.eq.1)then
          call col2(vxp(1,1), bm1, n)
          call col2(vyp(1,1), bm1, n)
-         call col2(vxp(1,2), bm1, n)
-         call col2(vyp(1,2), bm1, n)
          call to_arpack()
       endif
 
@@ -162,8 +157,6 @@ c     Time stepping has finished
          if(iarpack_mode.eq.2)then
             call col2(vxp(1,1), bm1, n)
             call col2(vyp(1,1), bm1, n)
-            call col2(vxp(1,2), bm1, n)
-            call col2(vyp(1,2), bm1, n)
             call to_arpack()
          else if(iarpack_mode.eq.3)then
             call to_arpack()
@@ -180,12 +173,8 @@ c-----------------------------------------------------------------------
       ntot1= nx1*ny1*nz1*nelt
       ifid = 50
       open(ifid, file='veco.dat')
-      do i=1,ntot1
-         write(ifid,*) vxp(i,1),vxp(i,2)
-      enddo
-      do i=1,ntot1
-         write(ifid,*) vyp(i,1),vyp(i,2)
-      enddo
+      write(ifid,*)(vxp(i,1),i=1,ntot1)
+      write(ifid,*)(vyp(i,1),i=1,ntot1)
       close(ifid)
       call exitt()
 
