@@ -14,3 +14,12 @@ Boundary condition
   p = 0, du/dn = 0
 
   Ref: http://lists.mcs.anl.gov/pipermail/nek5000-users/2014-May/002758.html
+
+* "SYM"
+  This applies only to flat boundaries.
+
+  u.n = 0
+  (grad(u)*n).t = 0
+  
+  This implies that dp/dn = 0, but this condition is implicit in the equations 
+  and is not explicitly enforced.
