@@ -22,5 +22,9 @@
     title(['N = ' int2str(N) '    \lambda_{max} = ' ...
         num2str(max(real(ee)),'%16.12f')]), drawnow
   end
-  [y,i] = sort(real(ee),'descend');
-  ee(i(1:10))
+  [yy,ii] = sort(real(ee),'descend');
+  ne = 10;
+  eer = real(ee(ii(1:ne)));
+  eei = imag(ee(ii(1:ne)));
+  format long e
+  [eer, eei]
