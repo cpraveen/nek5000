@@ -4,8 +4,9 @@ Compute eigenvalues of channel flow using time stepper approach with ARPACK
 "nek" contains files for nek5000
 
 To run:
-1. Compile arnoldi driver using makefile
+1. Compile arnoldi driver using makefile. This creates executable "eig"
 2. Compile nek5000 inside directory nek
+3. Run eig
 
 Possible choice of parameters:
 
