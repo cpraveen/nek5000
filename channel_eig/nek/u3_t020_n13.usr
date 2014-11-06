@@ -47,12 +47,9 @@ c-----------------------------------------------------------------------
       end   
 c-----------------------------------------------------------------------
       subroutine useric (ix,iy,iz,iel)
-      include 'SIZE'   
-      include 'TSTEP'  
-      include 'INPUT'  
-      include 'GEOM' 
-      include 'NEKUSE' 
-      common /ppointr/ jp
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
 
       real    vxin(lx1,ly1,lz1,lelt), vyin(lx1,ly1,lz1,lelt)
       common/rarpack/vxin,vyin
@@ -67,18 +64,17 @@ c     Base flow
       if(jp.eq.0)then
          ux = (1.0-y**2)  ! Add base flow (or not)
          uy = 0.0
-         uz = 0.0
          return
       endif
 
-      ntot1 = nx1*ny1*nz1*nelt
-
+c     First time read velocity from file
       if (icalld.eq.0) then
 
          icalld= 1
+         ntot1 = nx1*ny1*nz1*nelt
          ifid  = 50
          open(ifid,file='veci.dat',status='old')
-         read(ifid,*) iarpack_mode, nin
+         read(ifid,*) iarpack_mode, nin, nvecs
          if(nin.ne.ntot1)then
             write(6,*) 'Vector size dont match'
             call exitt()
@@ -89,9 +85,9 @@ c     Base flow
 
       endif
 
-      ux = vxin(ix,iy,iz,iel)
-      uy = vyin(ix,iy,iz,iel)
-      uz = 0.0
+      ie = gllel(iel)
+      ux = vxin(ix,iy,iz,ie)
+      uy = vyin(ix,iy,iz,ie)
 
       return
       end   
@@ -139,24 +135,52 @@ c     call outpost(ux,uy,vz,pr,t,'   ')  ! base field
 c     call outpost(vx,vy,vz,pr,t,'   ')  ! perturbation field
 c     call exitti ('quit userchk to dump perturbation field',nelv)
 
+c     Read vectors and save them to file
+      if(iarpack_mode.eq.4)then
+c        save base solution
+         ifxyo = .true.
+         call outpost(vx,vy,vz,pr,t,'   ')  ! perturbation field
+         ifxyo = .false.
+c        save eigenvectors
+         ifid  = 50
+         open(ifid,file='veci.dat',status='old')
+         read(ifid,*) iarpack_mode, nin, nvecs
+         if(nin.ne.n)then
+            write(6,*) 'Vector size dont match'
+            call exitt()
+         endif
+         do j=1,nvecs
+            read(ifid,*)(vx(i,1,1,1),i=1,n)
+            read(ifid,*)(vy(i,1,1,1),i=1,n)
+            call outpost(vx,vy,vz,pr,t,'   ')  ! perturbation field
+         enddo
+         close(ifid)
+         call exitt()
+      endif
+
 c     Make velocity continuous
-c     if(istep.eq.0)then
-c        call opdssum(vxp,vyp,vzp)
-c        call opcolv(vxp,vyp,vzp,vmult)
-c     endif
+      if(istep.eq.0)then
+         call opdssum(vxp,vyp,vzp)
+         call opcolv(vxp,vyp,vzp,vmult)
+      endif
 
 c     Multiply with mass matrix and exit
       if(iarpack_mode.eq.1)then
-         call col2(vxp(1,1), bm1, n)
-         call col2(vyp(1,1), bm1, n)
+         call col3(vx, bm1, v1mask, n)
+         call col3(vy, bm1, v2mask, n)
+         call col2(vxp, vx, n)
+         call col2(vyp, vx, n)
          call to_arpack()
       endif
 
 c     Time stepping has finished
       if(istep.eq.param(11))then
          if(iarpack_mode.eq.2)then
-            call col2(vxp(1,1), bm1, n)
-            call col2(vyp(1,1), bm1, n)
+c           Multiply by mass matrix
+            call col3(vx, bm1, v1mask, n)
+            call col3(vy, bm1, v2mask, n)
+            call col2(vxp, vx, n)
+            call col2(vyp, vx, n)
             call to_arpack()
          else if(iarpack_mode.eq.3)then
             call to_arpack()

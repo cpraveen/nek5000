@@ -111,10 +111,14 @@ c     %--------------------%
 c
       intrinsic         abs
 c
+      double precision  dt, dumm
+      integer           nsteps
 c     %-----------------------%
 c     | Executable Statements |
 c     %-----------------------%
 c
+      dt     = 2.0d-2
+      nsteps = 50
 c     %----------------------------------------------------%
 c     | The number N is the dimension of the matrix.  A    |
 c     | generalized eigenvalue problem is solved (BMAT =   |
@@ -129,7 +133,7 @@ c     |              NEV + 2 <= NCV <= MAXNCV              |
 c     %----------------------------------------------------%
 c
       n     = 2*ltot1
-      nev   = 4 
+      nev   = 4
       ncv   = 20 
       if ( n .gt. maxn ) then
          print *, ' ERROR with _NDRV3: N is greater than MAXN '
@@ -303,6 +307,16 @@ c
 c
          else 
 c
+            write(*,*) 'Number of converged eigenvectors = ', iparam(5)
+            write(*,*) 'Eigenvalues:'
+            call save_eigvec (n, ncv, maxncv, v)
+            dumm = 1.0/(dt*nsteps)
+            do j=1, iparam(5)
+               d(j,3) = dlog(dsqrt(d(j,1)**2+d(j,2)**2))*dumm
+               d(j,4) = datan2(d(j,2),d(j,1))*dumm
+               write(*,*) j, d(j,3), d(j,4)
+            enddo
+
             first = .true.
             nconv = iparam(5)
             do 30 j=1, iparam(5)
@@ -470,7 +484,7 @@ c------------------------------------------------------------------------
       n1  = n/2
       fid = 20
       open(fid, file='nek/veci.dat')
-      write(fid,*) imode, n1
+      write(fid,*) imode, n1, 1
       write(fid,*)(v(i),    i=1,n1)  ! x velocity
       write(fid,*)(v(i+n1), i=1,n1)  ! y velocity
       close(fid)
@@ -480,6 +494,33 @@ c------------------------------------------------------------------------
       open(fid, file='nek/veco.dat', status='old')
       read(fid,*)(w(i),i=1,n)
       close(fid)
+
+      return
+      end
+c------------------------------------------------------------------------
+      subroutine save_eigvec (n, m, ldv, v)
+      integer n, m
+      double precision
+     &        v(n,ldv)
+
+      integer imode, n1, fid
+
+      write(*,*) 'Saving eigenvectors'
+
+      imode = 4
+      n1    = n/2
+
+      fid = 20
+      open(fid, file='nek/veci.dat')
+      write(fid,*) imode, n1, m
+
+      do j=1,m
+         write(fid,*)(v(i,   j), i=1,n1)  ! x velocity
+         write(fid,*)(v(i+n1,j), i=1,n1)  ! y velocity
+      enddo
+      close(fid)
+
+      call system("./runnek.sh")
 
       return
       end

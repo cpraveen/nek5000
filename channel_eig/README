@@ -1,0 +1,15 @@
+Compute eigenvalues of channel flow using time stepper approach with ARPACK
+
+"doc" contains some notes and a chebyshev code for computing eigenvalues.
+"nek" contains files for nek5000
+
+To run:
+1. Compile arnoldi driver using makefile
+2. Compile nek5000 inside directory nek
+
+Possible choice of parameters:
+
+nev   = 4
+ncv   = 20
+nsteps= 50
+dt    = 2e-2
