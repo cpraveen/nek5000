@@ -13,3 +13,34 @@ nev   = 4
 ncv   = 20
 nsteps= 50
 dt    = 2e-2
+
+Here is the output:
+
+Eigenvalues
+           1   1.7276541095043293E-003  0.25292431264172249     
+           2   1.7276541095043293E-003 -0.25292431264172249     
+           3  -4.6726166412739363E-002   2.3802200499021411     
+           4 -0.11121855815066624       -5.6654474859561512     
+           5 -0.11082717984551220        3.3228528411234608 
+
+ Ritz values (Real,Imag) and relative residuals
+ ----------------------------------------------
+               Col   1       Col   2       Col   3
+  Row   1:    9.69859D-01   2.50669D-01   2.93468D-13
+  Row   2:    9.69859D-01  -2.50669D-01   2.93468D-13
+  Row   3:   -6.90843D-01   6.58420D-01   1.22028D-10
+  Row   4:   -6.90843D-01  -6.58420D-01   1.22028D-10
+  Row   5:    1.65970D-01   9.39965D-01   1.55593D-01
+  
+  
+  _NDRV3 
+  ====== 
+  
+  Size of the matrix is         5880
+  The number of Ritz values requested is            5
+  The number of Arnoldi vectors generated (NCV) is           20
+  What portion of the spectrum: LM
+  The number of converged Ritz values is            5
+  The number of Implicit Arnoldi update iterations taken is          244
+  The number of OP*x is         3085
+  The convergence criterion is    9.9999999747524271E-007
