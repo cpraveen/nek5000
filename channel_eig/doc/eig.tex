@@ -22,7 +22,7 @@ Consider the linearized Navier-Stokes (LNS) equation
 \[
 M_1 \dd{v}{t} = A_1 v + B_1 p, \qquad B_1^\top v = 0
 \]
-After eliminating the pressure we obtain
+Here $M_1$ is the mass matrix corresponding to the velocity. After eliminating the pressure we obtain
 \[
 \dd{v}{t} = Av
 \]
@@ -64,5 +64,31 @@ where $M_1$ is the mass matrix of velocity. Solving this generalized eigenvalue 
 
 \section{Plane Poiseuille flow}
 Consider a channel of dimensions $[-1,+1] \times [0, 2\pi]$. The base solution has the velocity $(1-y^2, 0)$. We use periodic boundary conditions in the $x$ direction.
+
+ARPACK requires following matrix-vector operations.
+
+\begin{itemize}
+
+\item {\tt subroutine mx(n, v, w)} \\
+{\tt imode = 1}\\
+\[
+w = M_1 v
+\]
+
+\item {\tt subroutine ax(n, v, w)}\\
+{\tt imode = 2}
+\[
+w = M_1 E_\tau v
+\]
+
+\item {\tt subroutine op(n, v, w)}\\
+{\tt imode = 3}
+\[
+w = E_\tau v
+\]
+
+\end{itemize}
+
+The value of {\tt imode} is passed to the time stepper ({\tt nek5000}) so that it can perform the appropriate operations.
 
 \end{document}  
