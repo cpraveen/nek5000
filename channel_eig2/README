@@ -1,0 +1,16 @@
+Compute eigenvalues of channel flow using time stepper approach with ARPACK
+
+"doc" contains some notes and a chebyshev code for computing eigenvalues.
+"nek" contains files for nek5000
+
+To run:
+
+* Compile arnoldi driver using makefile. This creates executable "eig"
+* cd nek
+* Set Reynolds in u3_t020_n13.rea
+* ./mkmesh
+* makenek channel
+* cd ..
+* ./eig
+
+Sample eigenvalues are in eig2000.txt and eig7000.txt
