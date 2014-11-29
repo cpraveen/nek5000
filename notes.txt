@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------------
+Notes on nek5000
+-------------------------------------------------------------------------------
+Some more notes are here
+
+https://docs.google.com/document/d/1CJP85lZaIIHoDO8X1kXbKBKLEzKiGURNm0dGXGy0XW0/
+
+-------------------------------------------------------------------------------
 Boundary condition
 -------------------------------------------------------------------------------
 
@@ -16,10 +23,23 @@ Boundary condition
   Ref: http://lists.mcs.anl.gov/pipermail/nek5000-users/2014-May/002758.html
 
 * "SYM"
-  This applies only to flat boundaries.
+  This applies only to flat boundaries which are parallel to a coordinate axis.
 
   u.n = 0
   (grad(u)*n).t = 0
   
   This implies that dp/dn = 0, but this condition is implicit in the equations 
   and is not explicitly enforced.
+
+-------------------------------------------------------------------------------
+SIZE file
+-------------------------------------------------------------------------------
+
+* How to set lelt, lelg, lp
+
+Suppose you have lelt=1000 and you go from P=64 to P=128.  Then set lelt=500 and
+recompile.
+
+Make certain lelg >= 500*P and lp >= 128.
+
+I would suggest lelg="big enough" (and an even number) and lp=32768.
