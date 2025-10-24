@@ -9,3 +9,8 @@ A collection of test cases using nek5000
 * gmsh2nek: Python script to convert gmsh mesh file to rea format (2d only)
 * naca0012: Famous symmetric airfoil, laminar test at Re=1000
 * pipe_osc: Oscillatory flow in a pipe (womersley flow)
+
+---
+
+* `Origin`: https://codeberg.org/cpraveen/nek5000
+* `Mirror`: https://github.com/cpraveen/nek5000
